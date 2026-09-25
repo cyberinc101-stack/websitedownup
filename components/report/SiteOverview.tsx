@@ -1,12 +1,15 @@
 /**
  * Top block of the report: site logo, preview image and key facts
  * (name, URL checked, response time, HTTP status, last checked).
+ * The site name links to /go/[domain], a short interstitial that shows
+ * an ad before sending the visitor on to the actual external site.
  *
  * UNTRUSTED DATA: page title/description/images come from the checked
  * site's HTML. Rendered as text and img src only.
  */
 
 import type { ReactNode } from "react";
+import Link from "next/link";
 import FallbackImage from "@/components/shared/FallbackImage";
 import SiteLogo from "@/components/shared/SiteLogo";
 import { DASH, shortUrl } from "./format";
@@ -61,7 +64,11 @@ export default function SiteOverview({
 
       <div className="min-w-0">
         <dl className="rounded-lg border border-line overflow-hidden text-sm">
-          <FactRow label="Website">{name}</FactRow>
+          <FactRow label="Website">
+            <Link href={"/go/" + result.domain} className="text-signal hover:underline">
+              {name}
+            </Link>
+          </FactRow>
           <FactRow label="URL checked">{finalUrl ? shortUrl(finalUrl) : result.domain}</FactRow>
           <FactRow label="Response time">
             <span className="font-mono tabular">
