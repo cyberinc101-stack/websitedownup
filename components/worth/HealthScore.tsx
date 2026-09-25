@@ -2,10 +2,14 @@
  * The Website Health Score: overall score, the biggest opportunity with
  * first steps, then all nine categories. Each category opens (native
  * <details>, works without JavaScript) to show exactly which checks passed.
+ *
+ * Colour follows the site's existing up/slow/down palette (scoreColor.ts),
+ * the same one StatusBadge and the popular-sites grid use, so a "Strong"
+ * score is the same green as an "Up" site elsewhere on the site.
  * No data or security logic. Contains no secrets.
  */
 
-import { scoreColor, scoreWord } from "./scoreColor";
+import { scoreTone, scoreWord, TONE_CLASS, UNCHECKED_CLASS } from "./scoreColor";
 import type { WorthReport } from "@/lib/worth/types";
 
 const RING_RADIUS = 34;
@@ -13,7 +17,7 @@ const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
 export default function HealthScore({ report, speedPending }: { report: WorthReport; speedPending: boolean }) {
   const { overall, categories, opportunity } = report.health;
-  const color = scoreColor(overall);
+  const overallClass = TONE_CLASS[scoreTone(overall)];
   const sorted = categories.slice().sort((a, b) => b.weight - a.weight);
 
   return (
@@ -22,27 +26,35 @@ export default function HealthScore({ report, speedPending }: { report: WorthRep
 
       <div className="mt-3 rounded-2xl border border-line bg-surface p-5 sm:p-6">
         <div className="flex items-center gap-5">
-          <svg width="84" height="84" viewBox="0 0 84 84" className="shrink-0" role="img" aria-label={"Health score " + overall + " out of 100"}>
+          <svg
+            width="84"
+            height="84"
+            viewBox="0 0 84 84"
+            className={"shrink-0 " + overallClass}
+            role="img"
+            aria-label={"Health score " + overall + " out of 100"}
+          >
             <circle cx="42" cy="42" r={RING_RADIUS} fill="none" stroke="currentColor" strokeWidth="8" className="text-line" />
             <circle
               cx="42"
               cy="42"
               r={RING_RADIUS}
               fill="none"
-              stroke={color}
+              stroke="currentColor"
               strokeWidth="8"
               strokeLinecap="round"
               strokeDasharray={RING_LENGTH}
               strokeDashoffset={RING_LENGTH * (1 - overall / 100)}
               transform="rotate(-90 42 42)"
             />
-            <text x="42" y="48" textAnchor="middle" className="font-display" fontSize="22" fontWeight="700" fill={color}>
+            <text x="42" y="48" textAnchor="middle" className="font-display" fontSize="22" fontWeight="700" fill="currentColor">
               {overall}
             </text>
           </svg>
           <div>
             <p className="font-display text-xl font-bold text-ink">
-              {scoreWord(overall)} <span className="text-muted font-normal text-base">{overall}/100</span>
+              <span className={overallClass}>{scoreWord(overall)}</span>{" "}
+              <span className="text-muted font-normal text-base">{overall}/100</span>
             </p>
             <p className="text-sm text-muted">
               {!report.pageRead
@@ -71,7 +83,7 @@ export default function HealthScore({ report, speedPending }: { report: WorthRep
 
       <ul className="mt-4 divide-y divide-line rounded-2xl border border-line bg-surface">
         {sorted.map((cat) => {
-          const c = cat.checked ? scoreColor(cat.score) : "#9ca3af";
+          const toneClass = cat.checked ? TONE_CLASS[scoreTone(cat.score)] : UNCHECKED_CLASS;
           const pending = speedPending && cat.id === "performance";
           return (
             <li key={cat.id}>
@@ -80,10 +92,13 @@ export default function HealthScore({ report, speedPending }: { report: WorthRep
                   <span className="w-28 shrink-0 text-sm font-medium text-ink">{cat.label}</span>
                   <span className="relative h-1.5 flex-1 rounded-full bg-line" aria-hidden="true">
                     {cat.checked && (
-                      <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: cat.score + "%", background: c }} />
+                      <span
+                        className={"absolute inset-y-0 left-0 rounded-full " + toneClass}
+                        style={{ width: cat.score + "%", backgroundColor: "currentColor" }}
+                      />
                     )}
                   </span>
-                  <span className="w-9 shrink-0 text-right text-sm font-semibold tabular-nums" style={{ color: c }}>
+                  <span className={"w-9 shrink-0 text-right text-sm font-semibold tabular-nums " + toneClass}>
                     {cat.checked ? cat.score : "\u2013"}
                   </span>
                   <svg className="h-4 w-4 shrink-0 text-muted transition-transform group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -102,7 +117,7 @@ export default function HealthScore({ report, speedPending }: { report: WorthRep
                     <ul className="space-y-1.5 text-sm">
                       {cat.checks.map((chk) => (
                         <li key={chk.label} className="flex gap-2">
-                          <span aria-hidden="true" className="w-4 shrink-0 font-bold" style={{ color: chk.pass ? "#15803d" : "#b91c1c" }}>
+                          <span aria-hidden="true" className={"w-4 shrink-0 font-bold " + (chk.pass ? "text-up" : "text-down")}>
                             {chk.pass ? "\u2713" : "\u2717"}
                           </span>
                           <span className={chk.pass ? "text-ink" : "text-muted"}>
