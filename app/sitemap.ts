@@ -3,7 +3,7 @@ import { POPULAR_SITES } from "@/lib/sites";
 import { SITE_URL } from "@/lib/config/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const staticRoutes = ["", "/about", "/contact", "/privacy"].map((path) => ({
+  const staticRoutes = ["", "/worth", "/about", "/contact", "/privacy"].map((path) => ({
     url: SITE_URL + path,
     lastModified: new Date(),
   }));
@@ -15,3 +15,4 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [...staticRoutes, ...siteRoutes];
 }
+

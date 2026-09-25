@@ -14,6 +14,9 @@ app/                              Routes (Next.js App Router). Keep these thin:
   api/recent/route.ts             GET /api/recent: live "Recently checked" feed
   api/popular/route.ts            GET /api/popular: live statuses of the top 100 sites
   site/[domain]/page.tsx          The "Is X down?" report page
+  worth/page.tsx                  Website Worth Calculator (copy lives in seo/pages/worth.ts)
+  api/worth/route.ts              GET /api/worth?domain=...: raw facts for the worth report
+  api/worth/speed/route.ts        GET /api/worth/speed?domain=...: mobile speed test (slow, cached 24h)
   about/, contact/, privacy/      Static pages (AdSense checks for all three)
   ads.txt/route.ts                Serves /ads.txt once the AdSense ID is set
   sitemap.ts, robots.ts           SEO files
@@ -39,6 +42,14 @@ components/                       React components
     DetailTabs.tsx                Redirects / Headers / DNS records tabs
     format.ts                     Date and text helpers for the report
   SiteStatusPanel.tsx             Assembles the report pieces above
+  worth/                          Website Worth tool UI
+    WorthAnalyzer.tsx             Form + loads the report (domain lives in the URL)
+    WorthReportView.tsx           Lays out the report sections and in-report ad
+    ValueHero.tsx                 Headline value and range band
+    PeriodTable.tsx               Visitors / pageviews / ad revenue per day, week, month, year
+    HealthScore.tsx               Health score, biggest opportunity, 9 categories
+    SiteFacts.tsx                 Domain age, rank, trend, speed, niche, tech
+    scoreColor.ts                 Score colours
   DomainChecker.tsx, HomeChecker.tsx, Header.tsx, Footer.tsx, AdSlot.tsx, StatusBadge.tsx
 
 lib/                              Logic, no React
@@ -48,8 +59,26 @@ lib/                              Logic, no React
   checkSite.ts                    Basic up/down check. Imported by client code
                                   too (normalizeDomain), so NO Node-only imports.
   sites.ts                        Top 100 popular sites, in rank order
+  worth/                          Website Worth logic
+    types.ts                      Shared types (client-safe)
+    collectSignals.ts             SERVER-ONLY: runs every check for one domain
+    sources/                      SERVER-ONLY data sources + page parsing
+      rank.ts                     Popularity rank + 90-day trend from data/worth/
+      firstSeen.ts                Earliest date the site was seen online
+      speedTest.ts                Mobile speed test (uses PAGESPEED_API_KEY)
+      pageFacts.ts                SEO / content / social facts from the HTML
+      detectTech.ts               Technology detection
+    engine/                       CLIENT-SAFE pure maths, runs in the browser
+      buildReport.ts              Signals -> full report (entry point)
+      traffic.ts                  Rank -> visitors curve, trend
+      niche.ts                    Niche + RPM detection
+      health.ts                   Health score checks and weights
+      advice.ts                   "Biggest opportunity" copy
+      format.ts                   Money / number / date formatting
   server/                         SERVER-ONLY entry points pages/routes call
     siteReport.ts                 getSiteReport() / getCachedSiteReport() (60s cache)
+    worthSignals.ts               getWorthSignals(): SSRF check + 12h cache + rank
+    worthSpeed.ts                 getSpeedResult(): speed test with 24h cache
     popularStatus.ts              Popular sites snapshot (5 min cache)
   activity/                       Live check activity shared by all visitors
     checkActivity.ts              SERVER-ONLY: record checks, live monitor, read feed + most checked
@@ -68,6 +97,23 @@ lib/                              Logic, no React
   security/                       SECURITY-CRITICAL code
     ssrfGuard.ts                  Blocks connections to private/internal IPs
     feedFilter.ts                 Keeps adult/offensive domains out of public lists
+    rateLimit.ts                  Per-visitor rate limit (hashed IPs, Redis, fails open)
+
+seo/                              ALL search-facing content, separate from code
+  types.ts                        The shape every SEO page file follows
+  buildMetadata.ts                SEO file -> Next.js metadata (title, canonical, OG)
+  pages/                          One file per page: title, description, H1, intro,
+    worth.ts                      sections, FAQ, related links
+  schema/                         Structured data builders (FAQ, breadcrumb, app)
+  components/                     SeoArticle.tsx (renders sections + FAQ), JsonLd.tsx
+
+data/worth/                       Static datasets for the worth tool
+  niches.ts                       Niches, ad RPM ranges, country adjustments
+  techSignatures.ts               Technology fingerprints
+  rank-current.json               Popularity ranking (generated, see below)
+  rank-previous.json              Same, ~90 days earlier (for the trend)
+
+scripts/worth/buildRankData.mjs   Regenerates the rank files: npm run worth:ranks
 
 docs/                             Notes like this one
 ```
@@ -81,6 +127,11 @@ docs/                             Notes like this one
 | Anything that opens a connection       | Must use `safeLookup` from `lib/security/ssrfGuard.ts` |
 | A new report section                   | `components/report/<SectionName>.tsx` |
 | A tool's interactive UI                | `components/tools/<ToolName>.tsx`  |
+| A new SEO page's copy                  | `seo/pages/<page-name>.ts` (follows `seo/types.ts`); the route only imports it |
+| Structured data for a page             | `seo/schema/<type>.ts`, rendered with `seo/components/JsonLd.tsx` |
+| A worth-report section                 | `components/worth/<SectionName>.tsx` |
+| Worth scoring / valuation rules        | `lib/worth/engine/` (weights in `health.ts`, traffic curve in `traffic.ts`) |
+| A detectable technology or niche       | `data/worth/techSignatures.ts` or `data/worth/niches.ts` |
 | Database / storage clients             | `lib/db/`                          |
 | A new cached server data source        | `lib/server/<name>.ts` using `unstable_cache` |
 | Browser-only helpers (localStorage...) | `lib/client/<name>.ts`             |
@@ -131,6 +182,23 @@ All three are public. Redeploy after changing them.
 |-----------------------|------------------------------------------|---------|
 | `KV_REST_API_URL`     | Vercel > Storage > Upstash Redis (auto)  | `lib/db/redis.ts` |
 | `KV_REST_API_TOKEN`   | Vercel > Storage > Upstash Redis (auto)  | `lib/db/redis.ts` |
+| `PAGESPEED_API_KEY`   | Google Cloud console (PageSpeed Insights API), optional | `lib/worth/sources/speedTest.ts` |
 
 For local dev, copy them into `.env.local` (git-ignored). `.env.example` lists every variable name with no values.
 Without them the site still works: the live feed runs from server memory instead (per server instance, resets on redeploy). Connect Redis for one shared, persistent feed across all visitors.
+
+Without `PAGESPEED_API_KEY` the speed test still runs on a small shared quota; when it fails, the worth report falls back to its quick speed check.
+
+## Keeping the Website Worth data fresh
+
+The popularity ranking is bundled in `data/worth/`. Refresh it every month or so:
+
+```
+npm run worth:ranks
+git add data/worth
+git commit -m "Update rank data"
+git push
+```
+
+Until it has been run once, every site is reported as unranked (low confidence).
+UI rule: the worth tool never names its data providers in user-facing text.

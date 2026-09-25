@@ -326,3 +326,106 @@ export async function probeHttp(domain: string): Promise<HttpInfo> {
 
   return failed(hops, "Too many redirects (more than " + MAX_REDIRECTS + ").");
 }
+
+
+/**
+ * Page fetch for the Website Worth analyzer (lib/worth/). Same SSRF-guarded
+ * request and redirect rules as probeHttp above, but also returns the raw
+ * HTML (capped at MAX_BODY_BYTES) and the specific response headers the
+ * caller asks for, so the worth tool can detect technology and page signals
+ * without a second request.
+ *
+ * UNTRUSTED DATA: `html` and `headers` come from the third-party site.
+ * Callers must treat them as plain text only.
+ */
+export interface FetchedPage {
+  ok: boolean;
+  finalUrl: string | null;
+  finalStatus: number | null;
+  redirects: number;
+  /** Only the header names requested, lowercased; values length-limited. */
+  headers: Record<string, string>;
+  timing: TimingInfo | null;
+  html: string | null;
+  error?: string;
+}
+
+export async function fetchPageForAnalysis(
+  domain: string,
+  headerNames: string[]
+): Promise<FetchedPage> {
+  const deadline = Date.now() + TOTAL_TIMEOUT_MS;
+  let url = new URL("https://" + domain);
+  let redirects = 0;
+  let redirectMs = 0;
+  let triedHttpFallback = false;
+  let attempts = 0;
+
+  const failedPage = (error: string): FetchedPage => ({
+    ok: false,
+    finalUrl: null,
+    finalStatus: null,
+    redirects,
+    headers: {},
+    timing: null,
+    html: null,
+    error,
+  });
+
+  while (redirects <= MAX_REDIRECTS) {
+    let hop: HopResult;
+    try {
+      hop = await requestOnce(url, true, deadline);
+    } catch (err) {
+      const code = errorCode(err);
+      // Some older sites only serve plain HTTP. Try it once before giving up.
+      if (attempts === 0 && !triedHttpFallback && code !== "ETIMEDOUT" && code !== "EBLOCKED") {
+        triedHttpFallback = true;
+        url = new URL("http://" + domain);
+        continue;
+      }
+      return failedPage(describeHttpError(err));
+    }
+    attempts++;
+
+    const location = hop.header("location");
+    if (hop.statusCode >= 300 && hop.statusCode < 400 && location) {
+      let next: URL;
+      try {
+        next = new URL(location, url);
+      } catch {
+        return failedPage("The site sent an invalid redirect.");
+      }
+      // SECURITY: only follow web redirects.
+      if (next.protocol !== "http:" && next.protocol !== "https:") {
+        return failedPage("The site redirects to a non-web address.");
+      }
+      redirectMs += hop.timing.totalMs;
+      redirects++;
+      url = next;
+      continue;
+    }
+
+    const headers: Record<string, string> = {};
+    for (const name of headerNames) {
+      const value = hop.header(name);
+      if (value === null) continue;
+      headers[name.toLowerCase()] =
+        value.length > MAX_HEADER_VALUE_LENGTH
+          ? value.slice(0, MAX_HEADER_VALUE_LENGTH - 3) + "..."
+          : value;
+    }
+
+    return {
+      ok: true,
+      finalUrl: url.toString(),
+      finalStatus: hop.statusCode,
+      redirects,
+      headers,
+      timing: { ...hop.timing, redirectMs },
+      html: hop.body,
+    };
+  }
+
+  return failedPage("Too many redirects (more than " + MAX_REDIRECTS + ").");
+}
