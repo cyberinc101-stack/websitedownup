@@ -64,8 +64,14 @@ async function attempt(
  * Performs a real, live reachability check against the given domain.
  * Tries HEAD first (cheap), falls back to GET since some servers
  * reject HEAD requests outright.
+ *
+ * timeoutMs lets callers that check a large batch of sites (the wider
+ * "Having problems" watch list) use a shorter timeout than the default,
+ * so a handful of slow/unreachable sites can't make the whole batch take
+ * far longer than the majority. The single-site checker and the ranked
+ * Top 100 snapshot keep the default, unshortened timeout.
  */
-export async function checkDomain(rawInput: string): Promise<CheckResult> {
+export async function checkDomain(rawInput: string, timeoutMs: number = TIMEOUT_MS): Promise<CheckResult> {
   const domain = normalizeDomain(rawInput);
   const checkedAt = new Date().toISOString();
 
@@ -81,9 +87,9 @@ export async function checkDomain(rawInput: string): Promise<CheckResult> {
     };
   }
 
-  const url = `https://${domain}`;
+  const url = "https://" + domain;
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   const started = Date.now();
 
   try {
@@ -103,7 +109,7 @@ export async function checkDomain(rawInput: string): Promise<CheckResult> {
       responseTimeMs,
       checkedAt,
       error: isServerError
-        ? `The server responded with an error (HTTP ${result.statusCode}).`
+        ? "The server responded with an error (HTTP " + result.statusCode + ")."
         : undefined,
     };
   } catch (err) {

@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -6,7 +6,7 @@ import PushServiceWorker from "@/components/PushServiceWorker";
 import { SITE_NAME, SITE_URL } from "@/lib/config/site";
 
 export const metadata: Metadata = {
-  title: SITE_NAME + " \u2014 Is it down right now?",
+  title: SITE_NAME,
   description:
     "Check whether any website is down for everyone or just for you. Live, real-time reachability checks with response times for popular sites.",
   metadataBase: new URL(SITE_URL),

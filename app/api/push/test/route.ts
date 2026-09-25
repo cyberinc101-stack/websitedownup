@@ -29,6 +29,9 @@ export async function POST(req: Request) {
   const parsed = validate(await req.json().catch(() => null));
   if (!parsed) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 
+  const host = req.headers.get("host") || "";
+  const icon = host ? "https://www.google.com/s2/favicons?domain=" + host + "&sz=128" : undefined;
+
   const webpush = getWebPush();
   try {
     await webpush.sendNotification(
@@ -36,7 +39,7 @@ export async function POST(req: Request) {
       JSON.stringify({
         title: "Test alert",
         body: "This is what a down-site alert will look like.",
-        icon: "/icon.svg",
+        icon,
       })
     );
     return NextResponse.json({ ok: true });

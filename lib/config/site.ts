@@ -13,7 +13,7 @@
 /** Your live domain, no trailing slash. e.g. https://pulsecheck.app */
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://example.com").replace(/\/+$/, "");
 
-export const SITE_NAME = "Is Site Up";
+export const SITE_NAME = "Website Up or Down";
 
 /** Public contact address shown on /contact. */
 export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@example.com";

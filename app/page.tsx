@@ -8,7 +8,7 @@ import LiveFeed from "@/components/home/LiveFeed";
 import PopularSitesExplorer from "@/components/home/PopularSitesExplorer";
 import { PopularStatusProvider } from "@/components/home/PopularStatusProvider";
 import FaqSection from "@/components/home/FaqSection";
-import { getPopularSnapshot } from "@/lib/server/popularStatus";
+import { getPopularSnapshot, getProblemsSnapshot } from "@/lib/server/popularStatus";
 import { getRecentActivity, runMonitorTick } from "@/lib/activity/checkActivity";
 import { SITE_NAME } from "@/lib/config/site";
 
@@ -22,6 +22,16 @@ const FEED_SIZE = 10;
 export default async function HomePage() {
   const [snapshot, feed] = await Promise.all([getPopularSnapshot(), getRecentActivity()]);
   after(runMonitorTick);
+  // Warm the wider "Having problems" cache in the background, after the
+  // response has already been sent, so it never delays this page load and
+  // is often already ready by the time ProblemsBox fetches it client-side.
+  after(async () => {
+    try {
+      await getProblemsSnapshot();
+    } catch {
+      // Best-effort warm-up only; ProblemsBox will fetch fresh on its own.
+    }
+  });
 
   return (
     <PopularStatusProvider initial={snapshot}>
