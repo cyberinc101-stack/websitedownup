@@ -36,7 +36,7 @@ export default async function HomePage() {
                 Website Status Checker
               </p>
               <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-ink mb-3">
-                Check if a website is down right now
+                Check if a website is down or online right now
               </h1>
               <p className="text-muted mb-6 leading-relaxed">
                 Enter any website below and {SITE_NAME} will connect to it right now

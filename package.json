@@ -1,5 +1,5 @@
 {
-  "name": "pulsecheck",
+  "name": "is-site-up",
   "version": "1.0.0",
   "private": true,
   "scripts": {
