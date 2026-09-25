@@ -11,6 +11,8 @@
 import { useMemo, useState } from "react";
 import NumberField from "./NumberField";
 import SelectField from "./SelectField";
+import ResultTable from "./ResultTable";
+import { periods } from "./periods";
 import { estimateMultiple, NEUTRAL_HEALTH } from "@/lib/worth/engine/multiple";
 import { formatMoney, roundSig } from "@/lib/worth/engine/format";
 
@@ -37,7 +39,7 @@ export default function ValueCalculator() {
       low: roundSig(mid * 0.7, 2),
       mid,
       high: roundSig(mid * 1.3, 2),
-      annualProfit: monthlyProfit * 12,
+      profit: periods(monthlyProfit),
     };
   }, [profit, age, trend]);
 
@@ -67,9 +69,14 @@ export default function ValueCalculator() {
           <p className="mt-3 text-sm text-muted">
             Likely between <span className="text-ink font-medium">{formatMoney(result.low)}</span> and{" "}
             <span className="text-ink font-medium">{formatMoney(result.high)}</span>, at{" "}
-            <span className="text-ink font-medium">{result.multiple}&times;</span> monthly profit (
-            {formatMoney(result.annualProfit)} a year).
+            <span className="text-ink font-medium">{result.multiple}&times;</span> monthly profit.
           </p>
+        </div>
+      )}
+
+      {result && (
+        <div className="mt-6">
+          <ResultTable rows={[{ label: "Profit", figures: result.profit, money: true }]} />
         </div>
       )}
     </div>
