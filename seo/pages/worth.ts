@@ -121,5 +121,12 @@ export const WORTH_PAGE: SeoPage = {
     },
   ],
 
-  related: [{ href: "/", label: "Check if a website is down right now" }],
+  related: [
+    { href: "/tools/website-value-calculator", label: "Website value calculator" },
+    { href: "/tools/website-revenue-calculator", label: "Website revenue calculator" },
+    { href: "/tools/adsense-revenue-calculator", label: "AdSense revenue calculator" },
+    { href: "/tools/rpm-calculator", label: "RPM calculator" },
+    { href: "/tools/website-traffic-value-calculator", label: "Website traffic value calculator" },
+    { href: "/", label: "Check if a website is down right now" },
+  ],
 };

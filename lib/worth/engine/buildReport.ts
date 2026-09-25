@@ -16,6 +16,7 @@
 import { detectNiche, adjustedRpm } from "./niche";
 import { estimateTraffic, rankTrend } from "./traffic";
 import { DAYS_PER_MONTH, roundSig, yearsSince } from "./format";
+import { estimateMultiple } from "./multiple";
 import {
   overallScore,
   pickOpportunity,
@@ -32,7 +33,6 @@ import {
 import type { PeriodFigures, Range, SpeedResult, WorthReport, WorthSignals } from "../types";
 
 const PROFIT_MARGIN = 0.75;
-const BASE_MULTIPLE = 32;
 /**
  * How far the value range reaches either side of the midpoint. Applied once
  * to the final value: stacking every low (or high) assumption together
@@ -42,8 +42,6 @@ const VALUE_BAND = {
   medium: { low: 0.55, high: 1.8 },
   low: { low: 0.3, high: 3 },
 };
-const MIN_MULTIPLE = 18;
-const MAX_MULTIPLE = 48;
 const MAJOR_BRAND_RANK = 2000;
 
 function periods(monthly: number): PeriodFigures {
@@ -53,23 +51,6 @@ function periods(monthly: number): PeriodFigures {
     monthly,
     yearly: monthly * 12,
   };
-}
-
-function multipleFor(ageYears: number | null, health: number, trend: string, lowConfidence: boolean): number {
-  let m = BASE_MULTIPLE;
-  if (ageYears !== null) {
-    if (ageYears < 1) m -= 10;
-    else if (ageYears < 2) m -= 6;
-    else if (ageYears < 3) m -= 3;
-    else if (ageYears >= 10) m += 6;
-    else if (ageYears >= 5) m += 3;
-  }
-  m += Math.max(-8, Math.min(8, (health - 60) / 4));
-  if (trend === "rising") m += 3;
-  else if (trend === "falling") m -= 4;
-  else if (trend === "new") m += 1;
-  if (lowConfidence) m -= 3;
-  return Math.round(Math.max(MIN_MULTIPLE, Math.min(MAX_MULTIPLE, m)));
 }
 
 export function buildReport(signals: WorthSignals, speed: SpeedResult | null): WorthReport {
@@ -98,7 +79,7 @@ export function buildReport(signals: WorthSignals, speed: SpeedResult | null): W
   const monthlyRevenue = (monthlyPageviews / 1000) * ((rpm[0] + rpm[1]) / 2);
 
   const lowConfidence = traffic.confidence === "low";
-  const multiple = multipleFor(domainAgeYears, overall, trend.direction, lowConfidence);
+  const multiple = estimateMultiple(domainAgeYears, overall, trend.direction, lowConfidence);
   const midValue = monthlyRevenue * PROFIT_MARGIN * multiple;
   const band = VALUE_BAND[traffic.confidence];
   const value: Range = {

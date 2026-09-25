@@ -16,8 +16,15 @@
 export interface Niche {
   id: string;
   label: string;
-  /** Page RPM in USD, [low, high]. */
+  /** Display-ad page RPM in USD, [low, high]. */
   rpm: [number, number];
+  /**
+   * Typical paid-search cost-per-click in USD, [low, high]. A genuinely
+   * different figure from display RPM (search ads are bid per click, not
+   * per 1,000 impressions), used by the traffic value calculator. Rough
+   * public-benchmark ranges; real CPC varies a lot by exact keyword.
+   */
+  searchCpc: [number, number];
   pagesPerVisit: number;
   keywords: string[];
 }
@@ -27,6 +34,7 @@ export const NICHES: Niche[] = [
     id: "finance",
     label: "Finance & investing",
     rpm: [14, 32],
+    searchCpc: [8, 25],
     pagesPerVisit: 2.4,
     keywords: ["finance", "invest", "investing", "stocks", "loan", "loans", "mortgage", "credit", "banking", "bank", "tax", "retirement", "trading", "crypto", "bitcoin", "budget", "money", "savings", "defi"],
   },
@@ -34,6 +42,7 @@ export const NICHES: Niche[] = [
     id: "insurance",
     label: "Insurance",
     rpm: [18, 40],
+    searchCpc: [15, 40],
     pagesPerVisit: 2.1,
     keywords: ["insurance", "insurer", "premium", "coverage", "policy", "claims", "underwriting"],
   },
@@ -41,6 +50,7 @@ export const NICHES: Niche[] = [
     id: "legal",
     label: "Legal",
     rpm: [14, 35],
+    searchCpc: [10, 30],
     pagesPerVisit: 2.0,
     keywords: ["lawyer", "attorney", "legal", "law", "lawsuit", "solicitor", "court", "injury", "divorce"],
   },
@@ -48,6 +58,7 @@ export const NICHES: Niche[] = [
     id: "business",
     label: "Business & software",
     rpm: [10, 24],
+    searchCpc: [4, 12],
     pagesPerVisit: 2.6,
     keywords: ["saas", "software", "platform", "business", "marketing", "crm", "analytics", "startup", "enterprise", "b2b", "productivity", "hosting", "seo", "api", "developer", "developers"],
   },
@@ -55,6 +66,7 @@ export const NICHES: Niche[] = [
     id: "health",
     label: "Health & fitness",
     rpm: [8, 20],
+    searchCpc: [2, 6],
     pagesPerVisit: 2.2,
     keywords: ["health", "medical", "doctor", "clinic", "fitness", "workout", "nutrition", "diet", "wellness", "symptoms", "therapy", "pharmacy", "supplements"],
   },
@@ -62,6 +74,7 @@ export const NICHES: Niche[] = [
     id: "realestate",
     label: "Real estate & home",
     rpm: [8, 20],
+    searchCpc: [2, 5],
     pagesPerVisit: 3.2,
     keywords: ["real estate", "property", "properties", "homes", "apartment", "rent", "rental", "realtor", "house", "renovation", "interior", "furniture", "garden", "diy"],
   },
@@ -69,6 +82,7 @@ export const NICHES: Niche[] = [
     id: "travel",
     label: "Travel",
     rpm: [6, 15],
+    searchCpc: [1, 3],
     pagesPerVisit: 2.8,
     keywords: ["travel", "hotel", "hotels", "flights", "flight", "vacation", "holiday", "tour", "tours", "destination", "booking", "resort", "trip"],
   },
@@ -76,6 +90,7 @@ export const NICHES: Niche[] = [
     id: "education",
     label: "Education",
     rpm: [5, 13],
+    searchCpc: [2, 5],
     pagesPerVisit: 2.7,
     keywords: ["course", "courses", "learn", "learning", "education", "school", "university", "tutorial", "tutorials", "students", "study", "lesson", "exam"],
   },
@@ -83,6 +98,7 @@ export const NICHES: Niche[] = [
     id: "tech",
     label: "Technology",
     rpm: [5, 13],
+    searchCpc: [1, 3],
     pagesPerVisit: 2.3,
     keywords: ["tech", "technology", "gadget", "gadgets", "smartphone", "laptop", "review", "reviews", "android", "iphone", "computer", "ai", "hardware", "apps"],
   },
@@ -90,6 +106,7 @@ export const NICHES: Niche[] = [
     id: "food",
     label: "Food & recipes",
     rpm: [6, 15],
+    searchCpc: [0.5, 1.5],
     pagesPerVisit: 2.0,
     keywords: ["recipe", "recipes", "food", "cooking", "baking", "kitchen", "restaurant", "meal", "dinner", "vegan", "chef"],
   },
@@ -97,6 +114,7 @@ export const NICHES: Niche[] = [
     id: "shopping",
     label: "Online store",
     rpm: [4, 11],
+    searchCpc: [0.5, 2],
     pagesPerVisit: 4.5,
     keywords: ["shop", "store", "cart", "checkout", "buy", "sale", "shipping", "products", "collection", "deals", "fashion", "clothing", "shoes"],
   },
@@ -104,6 +122,7 @@ export const NICHES: Niche[] = [
     id: "news",
     label: "News & media",
     rpm: [4, 10],
+    searchCpc: [0.3, 1],
     pagesPerVisit: 2.2,
     keywords: ["news", "breaking", "headlines", "politics", "journalism", "latest", "world", "opinion", "editorial", "report"],
   },
@@ -111,6 +130,7 @@ export const NICHES: Niche[] = [
     id: "tools",
     label: "Online tools",
     rpm: [3, 9],
+    searchCpc: [0.3, 1],
     pagesPerVisit: 1.7,
     keywords: ["calculator", "converter", "generator", "tool", "tools", "checker", "online", "free", "compress", "pdf", "convert"],
   },
@@ -118,6 +138,7 @@ export const NICHES: Niche[] = [
     id: "entertainment",
     label: "Entertainment",
     rpm: [2, 6],
+    searchCpc: [0.3, 1],
     pagesPerVisit: 3.0,
     keywords: ["movies", "movie", "music", "celebrity", "tv", "streaming", "video", "videos", "games", "gaming", "anime", "memes", "funny"],
   },
@@ -125,6 +146,7 @@ export const NICHES: Niche[] = [
     id: "community",
     label: "Forum & community",
     rpm: [2, 6],
+    searchCpc: [0.3, 1],
     pagesPerVisit: 4.0,
     keywords: ["forum", "community", "discussion", "members", "threads", "posts", "chat", "social"],
   },
@@ -134,6 +156,7 @@ export const GENERAL_NICHE: Niche = {
   id: "general",
   label: "General",
   rpm: [3, 8],
+  searchCpc: [0.5, 1.5],
   pagesPerVisit: 2.3,
   keywords: [],
 };
