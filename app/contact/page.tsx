@@ -30,9 +30,7 @@ export default function ContactPage() {
           Email
         </h2>
         
-          href={"mailto:" + CONTACT_EMAIL}
-          className="inline-flex items-center rounded-xl bg-signal px-5 py-3 font-semibold text-white hover:bg-signal-dark transition-colors"
-        >
+          <a href={"mailto:" + CONTACT_EMAIL} className="inline-flex items-center rounded-xl bg-signal px-5 py-3 font-semibold text-white hover:bg-signal-dark transition-colors">
           {CONTACT_EMAIL}
         </a>
         <p className="text-xs text-muted mt-3">

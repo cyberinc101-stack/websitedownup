@@ -42,11 +42,7 @@ export default function PrivacyPage() {
             visits to this and other websites. You can learn more about how
             Google uses data and manage your ad preferences at{" "}
             
-              href="https://policies.google.com/technologies/ads"
-              className="text-signal hover:underline"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+              <a href="https://policies.google.com/technologies/ads" className="text-signal hover:underline" target="_blank" rel="noopener noreferrer">
               Google&apos;s Ads Policy page
             </a>
             .
