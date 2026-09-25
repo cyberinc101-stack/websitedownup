@@ -1,14 +1,3 @@
-﻿/**
- * GET /api/cron/check-alerts: called by an external free pinger
- * (cron-job.org) every few minutes -- NOT Vercel Cron, since Hobby caps
- * Vercel'"'"'s own cron at once a day. Protected by CRON_SECRET so nobody
- * else can trigger it (and rack up needless checks/commands).
- *
- * Checks every watched domain, and only sends a push when status flips
- * up<->down (never on every tick), so notification volume -- and Redis
- * command volume -- stays tiny even as more people turn alerts on.
- * SERVER-ONLY.
- */
 import { NextResponse } from "next/server";
 import { checkDomain } from "@/lib/checkSite";
 import {
@@ -25,8 +14,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-// Caps both the check fan-out and Redis command usage per tick, however
-// many domains end up watched.
 const MAX_DOMAINS_PER_TICK = 60;
 const CHECK_CONCURRENCY = 10;
 
@@ -72,13 +59,11 @@ export async function GET(req: Request) {
 
   for (const domain of domains) {
     const status = current.get(domain);
-    if (!status) continue; // this tick's check failed; don'"'"'t touch stored status
+    if (!status) continue;
 
     const prevStatus = previous.get(domain);
     await setLastStatus(domain, status);
 
-    // Only notify on a real transition, and never on the first time we
-    // see a domain (no prior status to compare against).
     if (!prevStatus || prevStatus === status) continue;
 
     const subs = await getSubscriptionsForDomain(domain);
@@ -87,6 +72,7 @@ export async function GET(req: Request) {
     const payload = JSON.stringify({
       title: siteName(domain) + (status === "down" ? " is down" : " is back up"),
       body: status === "down" ? "We could not reach " + domain + "." : domain + " is responding again.",
+      icon: "https://" + domain + "/favicon.ico",
       url: "/site/" + domain,
     });
 
