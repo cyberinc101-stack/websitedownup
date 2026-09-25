@@ -79,7 +79,9 @@ lib/                              Logic, no React
     siteReport.ts                 getSiteReport() / getCachedSiteReport() (60s cache)
     worthSignals.ts               getWorthSignals(): SSRF check + 12h cache + rank
     worthSpeed.ts                 getSpeedResult(): speed test with 24h cache
-    popularStatus.ts              Popular sites snapshot (5 min cache)
+    popularStatus.ts              Popular sites + "Having problems" snapshots (2 min cache,
+                                  20 checks at a time, failures confirmed against history)
+    uptimeHistory.ts              When each tracked site last answered (tells outages from bot blocking)
   activity/                       Live check activity shared by all visitors
     checkActivity.ts              SERVER-ONLY: record checks, live monitor, read feed + most checked
     types.ts                      Shared types (client-safe)
@@ -91,7 +93,7 @@ lib/                              Logic, no React
     sslCertificate.ts             Certificate issuer, expiry, trust problems
     httpProbe.ts                  Redirects, load timing, headers, page info
     pageMeta.ts                   Parses title/description/images from HTML
-    domainExpiry.ts               Registrar + registration expiry
+    domainExpiry.ts               Registrar + registration dates, asked of each registry directly
     portCheck.ts                  Ports 80 / 443 / 8080
     types.ts                      Shared types (client-safe)
   security/                       SECURITY-CRITICAL code

@@ -4,6 +4,9 @@
  * "Having problems right now": sites (the ranked Top 100 plus the wider
  * watch list in lib/watchlist.ts) that are down or slow in the latest
  * snapshot, down first, then by popularity.
+ * Sites marked `unverified` (failing, but not seen working in the last 48
+ * hours, so almost certainly blocking automated checks) are left out: this
+ * box only lists real, current problems.
  * Self-contained: fetches /api/problems on mount and polls every 30s
  * while the tab is visible. Deliberately independent of the main Top 100
  * grid's own data fetch (PopularStatusProvider), so this widened check
@@ -84,7 +87,7 @@ export default function ProblemsBox({ className = "" }: { className?: string }) 
 
   const { sites } = snapshot;
   const problems = sites
-    .filter((s) => s.state !== "up")
+    .filter((s) => s.state !== "up" && !(s.state === "down" && s.unverified === true))
     .sort((a, b) => {
       if (a.state !== b.state) return a.state === "down" ? -1 : 1;
       return a.rank - b.rank;
@@ -110,7 +113,7 @@ export default function ProblemsBox({ className = "" }: { className?: string }) 
 
       {problems.length === 0 ? (
         <p className="text-sm text-muted">
-          All {sites.length} tracked sites are responding normally.
+          No outages detected right now across {sites.length} tracked sites.
         </p>
       ) : (
         <ul className="no-scrollbar -mx-1.5 flex-1 space-y-0.5 overflow-y-auto pr-1">
