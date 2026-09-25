@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * Saved sites: local to this browser only, no accounts or backend.
@@ -24,9 +24,6 @@ type Listener = () => void;
 const listeners = new Set<Listener>();
 let cache: SavedSite[] | null = null;
 
-// Fixed empty-array reference. useSyncExternalStore compares snapshots by
-// reference, so getServerSnapshot must return the *same* array instance
-// every call -- a new [] literal here causes an infinite re-render loop.
 const EMPTY_SITES: SavedSite[] = [];
 
 function read(): SavedSite[] {
@@ -46,13 +43,11 @@ function write(next: SavedSite[]) {
   try {
     window.localStorage.setItem(KEY, JSON.stringify(next));
   } catch {
-    // Storage full or blocked (private mode); this tab still updates in memory.
   }
   listeners.forEach((l) => l());
 }
 
 if (typeof window !== "undefined") {
-  // Keeps other open tabs in sync when one tab saves/removes a site.
   window.addEventListener("storage", (e) => {
     if (e.key === KEY) {
       cache = null;
@@ -89,6 +84,10 @@ export function removeSaved(domain: string) {
   write(read().filter((s) => s.domain !== domain));
 }
 
+export function clearAll() {
+  write([]);
+}
+
 export function toggleAlert(domain: string): boolean {
   const list = read();
   const site = list.find((s) => s.domain === domain);
@@ -108,5 +107,6 @@ export function useSavedSites() {
     toggleSave,
     toggleAlert,
     removeSaved,
+    clearAll,
   };
 }

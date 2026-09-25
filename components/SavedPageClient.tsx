@@ -1,18 +1,5 @@
 "use client";
 
-/**
- * Client body of /saved  the one screen for both saved sites and their
- * alert toggles, reached via the star link in the header. Data lives in
- * the browser (lib/client/savedSites.ts); statuses are fetched from
- * /api/check per saved domain on load and refreshed every REFRESH_MS.
- * The page title itself is set by app/saved/page.tsx (a server component,
- * since "use client" pages can't export metadata).
- *
- * Alerts: toggleAlert() (in lib/client/savedSites.ts) handles the whole
- * Web Push subscribe/permission flow itself, so BellButton just flips the
- * toggle  no separate permission call needed here.
- */
-
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import SiteLogo from "@/components/shared/SiteLogo";
@@ -23,6 +10,17 @@ import AdSlot from "@/components/AdSlot";
 const REFRESH_MS = 60000;
 
 type Status = { status: "up" | "down"; responseTimeMs: number | null } | null;
+
+async function fetchStatus(domain: string): Promise<Status> {
+  try {
+    const res = await fetch("/api/check?domain=" + encodeURIComponent(domain));
+    if (!res.ok) return null;
+    const data = await res.json();
+    return { status: data.status, responseTimeMs: data.responseTimeMs };
+  } catch {
+    return null;
+  }
+}
 
 function BellButton({ domain }: { domain: string }) {
   const { isAlerting, toggleAlert } = useSavedSites();
@@ -51,8 +49,50 @@ function BellButton({ domain }: { domain: string }) {
   );
 }
 
+function RefreshButton({ domain, onRefresh }: { domain: string; onRefresh: (domain: string) => Promise<void> }) {
+  const [checking, setChecking] = useState(false);
+
+  async function handleClick() {
+    if (checking) return;
+    setChecking(true);
+    try {
+      await onRefresh(domain);
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={checking}
+      title="Check this site now"
+      aria-label={"Check " + domain + " now"}
+      className="inline-flex items-center justify-center rounded-full border border-line bg-surface p-1.5 text-muted shrink-0 transition-colors hover:text-ink hover:border-signal/40 disabled:opacity-60"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="13"
+        height="13"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={checking ? "animate-spin" : ""}
+      >
+        <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+        <path d="M21 3v5h-5" />
+        <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+        <path d="M8 16H3v5" />
+      </svg>
+    </button>
+  );
+}
+
 export default function SavedPageClient() {
-  const { sites } = useSavedSites();
+  const { sites, clearAll } = useSavedSites();
   const [statuses, setStatuses] = useState<Record<string, Status>>({});
   const domainKey = sites.map((s) => s.domain).join(",");
 
@@ -62,16 +102,7 @@ export default function SavedPageClient() {
     async function refresh() {
       const domains = domainKey ? domainKey.split(",") : [];
       const results = await Promise.all(
-        domains.map(async (domain) => {
-          try {
-            const res = await fetch("/api/check?domain=" + encodeURIComponent(domain));
-            if (!res.ok) return [domain, null] as const;
-            const data = await res.json();
-            return [domain, { status: data.status, responseTimeMs: data.responseTimeMs }] as const;
-          } catch {
-            return [domain, null] as const;
-          }
-        })
+        domains.map(async (domain) => [domain, await fetchStatus(domain)] as const)
       );
       if (!stopped) setStatuses(Object.fromEntries(results));
     }
@@ -84,13 +115,44 @@ export default function SavedPageClient() {
     };
   }, [domainKey]);
 
+  async function refreshOne(domain: string) {
+    const result = await fetchStatus(domain);
+    setStatuses((prev) => ({ ...prev, [domain]: result }));
+  }
+
+  function handleClearAll() {
+    if (sites.length === 0) return;
+    const ok = window.confirm(
+      "Remove all " + sites.length + " saved site" + (sites.length === 1 ? "" : "s") + "? This can't be undone."
+    );
+    if (ok) clearAll();
+  }
+
+  const sortedSites = [...sites].sort((a, b) => {
+    const aDown = statuses[a.domain]?.status === "down";
+    const bDown = statuses[b.domain]?.status === "down";
+    if (aDown === bDown) return 0;
+    return aDown ? -1 : 1;
+  });
+
   return (
     <div className="mx-auto max-w-3xl px-5 sm:px-8 py-10">
       <h1 className="font-display text-2xl font-bold text-ink mb-1">Saved sites</h1>
-      <p className="text-sm text-muted mb-6">
-        {sites.length} of {MAX_SAVED} saved. Turn on alerts to get a notification the moment a saved site goes
-        down &mdash; this works even if your browser is closed.
-      </p>
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <p className="text-sm text-muted">
+          {sites.length} of {MAX_SAVED} saved. Turn on alerts to get a notification the moment a saved site goes
+          down &mdash; this works even if your browser is closed.
+        </p>
+        {sites.length > 0 && (
+          <button
+            type="button"
+            onClick={handleClearAll}
+            className="shrink-0 text-xs font-semibold text-muted hover:text-down whitespace-nowrap"
+          >
+            Remove all
+          </button>
+        )}
+      </div>
 
       <AdSlot className="mb-8 min-h-[200px]" />
 
@@ -103,7 +165,7 @@ export default function SavedPageClient() {
         </div>
       ) : (
         <ul className="space-y-2">
-          {sites.map((s) => {
+          {sortedSites.map((s) => {
             const st = statuses[s.domain];
             const down = st?.status === "down";
             return (
@@ -122,6 +184,7 @@ export default function SavedPageClient() {
                   </p>
                 </Link>
                 <span className={"h-2 w-2 rounded-full shrink-0 " + (down ? "bg-down" : "bg-up")} aria-hidden="true" />
+                <RefreshButton domain={s.domain} onRefresh={refreshOne} />
                 <BellButton domain={s.domain} />
                 <SaveButton domain={s.domain} />
               </li>
