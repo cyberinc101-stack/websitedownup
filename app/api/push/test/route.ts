@@ -36,6 +36,7 @@ export async function POST(req: Request) {
       JSON.stringify({
         title: "Test alert",
         body: "This is what a down-site alert will look like.",
+        icon: "/icon.svg",
       })
     );
     return NextResponse.json({ ok: true });
