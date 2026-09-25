@@ -33,10 +33,10 @@ export default async function HomePage() {
           main={
             <section className="max-w-2xl">
               <p className="font-mono text-xs uppercase tracking-widest text-signal mb-3">
-                Live reachability check
+                Website Status Checker
               </p>
               <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-ink mb-3">
-                Is it down, or just you?
+                Check if a website is down right now
               </h1>
               <p className="text-muted mb-6 leading-relaxed">
                 Enter any website below and {SITE_NAME} will connect to it right now
