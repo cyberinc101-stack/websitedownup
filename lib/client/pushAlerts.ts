@@ -3,7 +3,7 @@
 /**
  * Browser Web Push wiring for the alert toggle. Free -- native Push API
  * talking only to our own /api/push/subscribe route, no SMS/email
- * provider involved. Silently no-ops if the browser doesn'"'"'t support push
+ * provider involved. Silently no-ops if the browser doesn't support push
  * or permission is denied, rather than throwing.
  */
 
@@ -78,7 +78,7 @@ export async function unsubscribeFromDomain(domain: string): Promise<void> {
 
 export async function sendTestAlert(): Promise<{ ok: boolean; error?: string }> {
   if (!isPushSupported()) {
-    return { ok: false, error: "Push notifications aren'"'"'t supported in this browser." };
+    return { ok: false, error: "Push notifications aren't supported in this browser." };
   }
   if (Notification.permission !== "granted") {
     return { ok: false, error: "Turn on alerts for a saved site first to grant permission." };
@@ -98,7 +98,7 @@ export async function sendTestAlert(): Promise<{ ok: boolean; error?: string }> 
     });
     if (!res.ok) {
       const data = await res.json().catch(() => null);
-      return { ok: false, error: (data && data.error) || "Couldn'"'"'t send the test notification." };
+      return { ok: false, error: (data && data.error) || "Couldn't send the test notification." };
     }
     return { ok: true };
   } catch {

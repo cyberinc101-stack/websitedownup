@@ -21,7 +21,7 @@ function validate(body: unknown): Body | null {
 export async function POST(req: Request) {
   if (!isPushConfigured()) {
     return NextResponse.json(
-      { error: "Push notifications aren'"'"'t configured on the server." },
+      { error: "Push notifications aren't configured on the server." },
       { status: 503 }
     );
   }
@@ -43,10 +43,10 @@ export async function POST(req: Request) {
     const statusCode = (err as { statusCode?: number })?.statusCode;
     if (statusCode === 404 || statusCode === 410) {
       return NextResponse.json(
-        { error: "This browser'"'"'s push subscription has expired. Turn an alert off and back on, then try again." },
+        { error: "This browser's push subscription has expired. Turn an alert off and back on, then try again." },
         { status: 410 }
       );
     }
-    return NextResponse.json({ error: "Couldn'"'"'t send the test notification." }, { status: 502 });
+    return NextResponse.json({ error: "Couldn't send the test notification." }, { status: 502 });
   }
 }

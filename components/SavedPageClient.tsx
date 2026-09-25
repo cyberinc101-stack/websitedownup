@@ -104,7 +104,7 @@ function TestAlertButton() {
       setState("ok");
     } else {
       setState("error");
-      setError(result.error || "Couldn'"'"'t send the test notification.");
+      setError(result.error || "Couldn't send the test notification.");
     }
     setTimeout(() => setState("idle"), 4000);
   }
@@ -158,7 +158,7 @@ export default function SavedPageClient() {
   function handleClearAll() {
     if (sites.length === 0) return;
     const ok = window.confirm(
-      "Remove all " + sites.length + " saved site" + (sites.length === 1 ? "" : "s") + "? This can'"'"'t be undone."
+      "Remove all " + sites.length + " saved site" + (sites.length === 1 ? "" : "s") + "? This can't be undone."
     );
     if (ok) clearAll();
   }
