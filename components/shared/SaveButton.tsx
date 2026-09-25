@@ -1,13 +1,8 @@
 "use client";
 
-/**
- * Red star toggle used on every site card, the live feed, and the report
- * page. Works inside a <Link> (the card itself is often a link) by
- * preventing the click from bubbling into the anchor's navigation.
- */
-
 import type { MouseEvent } from "react";
 import { useSavedSites, MAX_SAVED } from "@/lib/client/savedSites";
+import { unsubscribeFromDomain } from "@/lib/client/pushAlerts";
 
 export default function SaveButton({
   domain,
@@ -16,7 +11,7 @@ export default function SaveButton({
   domain: string;
   className?: string;
 }) {
-  const { isSaved, toggleSave, count } = useSavedSites();
+  const { isSaved, isAlerting, toggleSave, count } = useSavedSites();
   const saved = isSaved(domain);
   const atLimit = !saved && count >= MAX_SAVED;
 
@@ -24,7 +19,11 @@ export default function SaveButton({
     e.preventDefault();
     e.stopPropagation();
     if (atLimit) return;
+    const hadAlert = saved && isAlerting(domain);
     toggleSave(domain);
+    if (hadAlert) {
+      void unsubscribeFromDomain(domain);
+    }
   }
 
   return (

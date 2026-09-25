@@ -27,19 +27,29 @@ function BellButton({ domain }: { domain: string }) {
   const { isAlerting, toggleAlert } = useSavedSites();
   const on = isAlerting(domain);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleClick() {
     if (busy) return;
     setBusy(true);
+    setError(null);
     try {
       if (on) {
         toggleAlert(domain);
         await unsubscribeFromDomain(domain);
+        return;
+      }
+
+      if (typeof Notification !== "undefined" && Notification.permission === "denied") {
+        setError("Notifications are blocked for this site in your browser settings.");
+        return;
+      }
+
+      const ok = await subscribeToDomain(domain);
+      if (ok) {
+        toggleAlert(domain);
       } else {
-        const ok = await subscribeToDomain(domain);
-        if (ok) {
-          toggleAlert(domain);
-        }
+        setError("Couldn't turn on alerts. Check notification permission for this site.");
       }
     } finally {
       setBusy(false);
@@ -47,26 +57,31 @@ function BellButton({ domain }: { domain: string }) {
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={busy}
-      aria-pressed={on}
-      title={on ? "Turn off alerts for this site" : "Get notified if this site goes down"}
-      className={
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors shrink-0 disabled:opacity-60 " +
-        (on
-          ? "border-signal bg-signal text-white"
-          : "border-line bg-surface text-muted hover:text-ink hover:border-signal/40")
-      }
-    >
-      <svg viewBox="0 0 24 24" width="13" height="13" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-        fill={on ? "currentColor" : "none"} stroke="currentColor">
-        <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-        <path d="M13.7 21a2 2 0 01-3.4 0" />
-      </svg>
-      {busy ? "\u2026" : on ? "Alerts on" : "Alert me"}
-    </button>
+    <div className="relative shrink-0">
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={busy}
+        aria-pressed={on}
+        title={on ? "Turn off alerts for this site" : "Get notified if this site goes down"}
+        className={
+          "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors shrink-0 disabled:opacity-60 " +
+          (on
+            ? "border-signal bg-signal text-white"
+            : "border-line bg-surface text-muted hover:text-ink hover:border-signal/40")
+        }
+      >
+        <svg viewBox="0 0 24 24" width="13" height="13" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+          fill={on ? "currentColor" : "none"} stroke="currentColor">
+          <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.7 21a2 2 0 01-3.4 0" />
+        </svg>
+        {busy ? "\u2026" : on ? "Alerts on" : "Alert me"}
+      </button>
+      {error && (
+        <p className="absolute right-0 top-full z-10 mt-1 w-48 text-right text-[11px] text-down">{error}</p>
+      )}
+    </div>
   );
 }
 
@@ -149,6 +164,7 @@ function TestAlertButton() {
 export default function SavedPageClient() {
   const { sites, clearAll } = useSavedSites();
   const [statuses, setStatuses] = useState<Record<string, Status>>({});
+  const [clearing, setClearing] = useState(false);
   const domainKey = sites.map((s) => s.domain).join(",");
 
   useEffect(() => {
@@ -175,12 +191,21 @@ export default function SavedPageClient() {
     setStatuses((prev) => ({ ...prev, [domain]: result }));
   }
 
-  function handleClearAll() {
-    if (sites.length === 0) return;
+  async function handleClearAll() {
+    if (sites.length === 0 || clearing) return;
     const ok = window.confirm(
       "Remove all " + sites.length + " saved site" + (sites.length === 1 ? "" : "s") + "? This can't be undone."
     );
-    if (ok) clearAll();
+    if (!ok) return;
+
+    setClearing(true);
+    try {
+      const alertingDomains = sites.filter((s) => s.alert).map((s) => s.domain);
+      clearAll();
+      await Promise.all(alertingDomains.map((d) => unsubscribeFromDomain(d)));
+    } finally {
+      setClearing(false);
+    }
   }
 
   const sortedSites = [...sites].sort((a, b) => {
@@ -204,9 +229,10 @@ export default function SavedPageClient() {
             <button
               type="button"
               onClick={handleClearAll}
-              className="text-xs font-semibold text-muted hover:text-down whitespace-nowrap"
+              disabled={clearing}
+              className="text-xs font-semibold text-muted hover:text-down whitespace-nowrap disabled:opacity-60"
             >
-              Remove all
+              {clearing ? "Removing\u2026" : "Remove all"}
             </button>
           )}
         </div>
