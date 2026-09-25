@@ -1,5 +1,6 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { SITE_NAME } from "@/lib/config/site";
+import SavedNavLink from "@/components/layout/SavedNavLink";
 
 export default function Header() {
   return (
@@ -16,9 +17,7 @@ export default function Header() {
           </span>
         </Link>
         <nav className="flex items-center gap-6 text-sm font-medium text-muted">
-          <Link href="/" className="hover:text-ink transition-colors">
-            Check a site
-          </Link>
+          <SavedNavLink />
           <Link href="/about" className="hover:text-ink transition-colors">
             About
           </Link>

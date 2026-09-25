@@ -2,9 +2,9 @@
 
 /**
  * The full site report shown on /site/[domain].
- * Layout (top to bottom): status header, overview (logo, preview, key
- * facts), load timing bar, four diagnostic cards, collapsible detail tabs.
- * The individual pieces live in components/report/.
+ * Layout (top to bottom): status header (with save star), overview (logo,
+ * preview, key facts), load timing bar, four diagnostic cards, collapsible
+ * detail tabs. The individual pieces live in components/report/.
  *
  * Data comes from lib/server/siteReport.ts (first render) and
  * /api/check?diagnostics=1 ("Check again"). Checks are recorded for the
@@ -15,6 +15,7 @@ import { useState } from "react";
 import StatusBadge from "./StatusBadge";
 import SiteOverview from "./report/SiteOverview";
 import SiteLogo from "./shared/SiteLogo";
+import SaveButton from "./shared/SaveButton";
 import TimingBar from "./report/TimingBar";
 import DiagnosticCards from "./report/DiagnosticCards";
 import DetailTabs from "./report/DetailTabs";
@@ -68,6 +69,7 @@ export default function SiteStatusPanel({ initial }: { initial: Result }) {
                 {result.domain}
               </h1>
               <StatusBadge state={loading ? "checking" : result.status} />
+              <SaveButton domain={result.domain} className="scale-125" />
             </div>
             <p className="text-sm text-muted truncate">
               {result.status === "up"

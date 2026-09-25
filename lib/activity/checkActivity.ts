@@ -2,13 +2,17 @@
  * Records every check and serves the live activity shown to all visitors:
  * "Recently checked" (newest first) and "Most checked" (last ~2 days).
  *
- * LIVE MONITOR: while anyone is on the site, our monitor makes one REAL
- * check of the next popular site every MONITOR_INTERVAL_SECONDS and adds it
- * to the feed tagged "monitor" (shown as "auto"). This keeps the feed full
- * and moving with genuine results. The feed always prefers real visitor
- * checks from the last USER_PRIORITY_MINUTES and fills the rest with
- * monitor checks. A Redis lock makes it one monitor check per interval
- * site-wide, no matter how many visitors are online. No visitors = no checks.
+ * LIVE MONITOR: while anyone is on the site, our monitor makes real checks
+ * of the next popular sites every MONITOR_INTERVAL_SECONDS and adds them
+ * to the feed tagged "monitor" (shown as "auto"). On a cold start (empty
+ * monitor list) it checks a whole batch at once so the feed fills
+ * immediately instead of trickling in one site per tick. Each check in a
+ * batch is capped at MONITOR_CHECK_TIMEOUT_MS -- shorter than checkDomain's
+ * normal timeout -- so one slow popular site can't stall the whole batch.
+ * The feed always prefers real visitor checks from the last
+ * USER_PRIORITY_MINUTES and fills the rest with monitor checks. A Redis
+ * lock makes it one monitor tick per interval site-wide, no matter how
+ * many visitors are online. No visitors = no checks.
  *
  * SERVER-ONLY. Storage: Upstash Redis via lib/db/redis.ts.
  * FALLBACK: if Redis isn't configured (e.g. localhost, or before you
@@ -35,7 +39,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import dns from "node:dns";
 import { unstable_cache } from "next/cache";
-import { checkDomain, isLikelyValidDomain, normalizeDomain } from "@/lib/checkSite";
+import { checkDomain, isLikelyValidDomain, normalizeDomain, type CheckResult } from "@/lib/checkSite";
 import { POPULAR_SITES } from "@/lib/sites";
 import { isRedisConfigured, redisPipeline } from "@/lib/db/redis";
 import { isFeedSafeDomain } from "@/lib/security/feedFilter";
@@ -54,8 +58,10 @@ const MONITOR_KEY = KEY_PREFIX + "monitor";
 const MONITOR_KEEP = 20;
 const MONITOR_LOCK_KEY = KEY_PREFIX + "monitor-lock";
 const MONITOR_INDEX_KEY = KEY_PREFIX + "monitor-index";
-/** One monitor check per this many seconds, site-wide. */
-const MONITOR_INTERVAL_SECONDS = 8;
+/** One monitor tick per this many seconds, site-wide. */
+const MONITOR_INTERVAL_SECONDS = 5;
+/** Per-site cap inside a monitor batch, so one slow site can't stall the rest. */
+const MONITOR_CHECK_TIMEOUT_MS = 4000;
 /** Visitor checks newer than this always show before monitor checks. */
 const USER_PRIORITY_MINUTES = 30;
 
@@ -126,6 +132,23 @@ async function resolvesPublicly(domain: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/** Races a promise against a timeout, resolving to `fallback` if it's slower than `ms`. */
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(fallback), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      () => {
+        clearTimeout(timer);
+        resolve(fallback);
+      }
+    );
+  });
 }
 
 /** SECURITY: stored entries are re-validated before use. */
@@ -205,15 +228,27 @@ export async function recordCheck(
 }
 
 /**
- * Makes one real monitor check if none has run in the last
+ * Makes real monitor checks if none has run in the last
  * MONITOR_INTERVAL_SECONDS (site-wide lock). Call inside `after()` from
  * requests that show the feed. Never throws.
  * SECURITY: only checks the fixed popular list, never user input.
  */
-/** Checks `count` popular sites starting after position `end - count`. */
+/** Checks `count` popular sites starting after position `end - count`, each capped at MONITOR_CHECK_TIMEOUT_MS. */
 async function monitorBatch(end: number, count: number): Promise<string[]> {
   const sites = Array.from({ length: count }, (_, i) => POPULAR_SITES[(end - count + i) % POPULAR_SITES.length]);
-  const results = await Promise.all(sites.map((site) => checkDomain(site.domain)));
+  const results = await Promise.all(
+    sites.map((site) =>
+      withTimeout<CheckResult>(checkDomain(site.domain), MONITOR_CHECK_TIMEOUT_MS, {
+        input: site.domain,
+        domain: site.domain,
+        status: "down",
+        statusCode: null,
+        responseTimeMs: null,
+        checkedAt: new Date().toISOString(),
+        error: "Timed out",
+      })
+    )
+  );
   return results.map((result, i) =>
     JSON.stringify({
       d: sites[i].domain,
