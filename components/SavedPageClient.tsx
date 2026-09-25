@@ -5,6 +5,7 @@ import Link from "next/link";
 import SiteLogo from "@/components/shared/SiteLogo";
 import SaveButton from "@/components/shared/SaveButton";
 import { useSavedSites, MAX_SAVED } from "@/lib/client/savedSites";
+import { sendTestAlert } from "@/lib/client/pushAlerts";
 import AdSlot from "@/components/AdSlot";
 
 const REFRESH_MS = 60000;
@@ -91,6 +92,40 @@ function RefreshButton({ domain, onRefresh }: { domain: string; onRefresh: (doma
   );
 }
 
+function TestAlertButton() {
+  const [state, setState] = useState<"idle" | "sending" | "ok" | "error">("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleClick() {
+    setState("sending");
+    setError(null);
+    const result = await sendTestAlert();
+    if (result.ok) {
+      setState("ok");
+    } else {
+      setState("error");
+      setError(result.error || "Couldn'"'"'t send the test notification.");
+    }
+    setTimeout(() => setState("idle"), 4000);
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={state === "sending"}
+        className="shrink-0 text-xs font-semibold text-muted hover:text-ink whitespace-nowrap disabled:opacity-60"
+      >
+        {state === "sending" ? "Sending\u2026" : state === "ok" ? "Sent \u2713" : "Test alert"}
+      </button>
+      {state === "error" && error && (
+        <p className="text-[11px] text-down text-right max-w-[220px]">{error}</p>
+      )}
+    </div>
+  );
+}
+
 export default function SavedPageClient() {
   const { sites, clearAll } = useSavedSites();
   const [statuses, setStatuses] = useState<Record<string, Status>>({});
@@ -123,7 +158,7 @@ export default function SavedPageClient() {
   function handleClearAll() {
     if (sites.length === 0) return;
     const ok = window.confirm(
-      "Remove all " + sites.length + " saved site" + (sites.length === 1 ? "" : "s") + "? This can't be undone."
+      "Remove all " + sites.length + " saved site" + (sites.length === 1 ? "" : "s") + "? This can'"'"'t be undone."
     );
     if (ok) clearAll();
   }
@@ -143,15 +178,18 @@ export default function SavedPageClient() {
           {sites.length} of {MAX_SAVED} saved. Turn on alerts to get a notification the moment a saved site goes
           down &mdash; this works even if your browser is closed.
         </p>
-        {sites.length > 0 && (
-          <button
-            type="button"
-            onClick={handleClearAll}
-            className="shrink-0 text-xs font-semibold text-muted hover:text-down whitespace-nowrap"
-          >
-            Remove all
-          </button>
-        )}
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <TestAlertButton />
+          {sites.length > 0 && (
+            <button
+              type="button"
+              onClick={handleClearAll}
+              className="text-xs font-semibold text-muted hover:text-down whitespace-nowrap"
+            >
+              Remove all
+            </button>
+          )}
+        </div>
       </div>
 
       <AdSlot className="mb-8 min-h-[200px]" />

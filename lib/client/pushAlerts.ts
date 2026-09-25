@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * Browser Web Push wiring for the alert toggle. Free -- native Push API
@@ -67,17 +67,41 @@ export async function unsubscribeFromDomain(domain: string): Promise<void> {
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
     if (!subscription) return;
-    // The same browser subscription is shared across every domain the
-    // user has alerts on, so we only tell the server to stop sending
-    // this domain'"'"'s notifications to it -- we do NOT call
-    // subscription.unsubscribe(), which would kill alerts for every
-    // other saved site too.
     await fetch("/api/push/subscribe", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ domain, subscription: subscription.toJSON() }),
     });
   } catch {
-    // best-effort; the local alert flag is already off either way
+  }
+}
+
+export async function sendTestAlert(): Promise<{ ok: boolean; error?: string }> {
+  if (!isPushSupported()) {
+    return { ok: false, error: "Push notifications aren'"'"'t supported in this browser." };
+  }
+  if (Notification.permission !== "granted") {
+    return { ok: false, error: "Turn on alerts for a saved site first to grant permission." };
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      return { ok: false, error: "Turn on alerts for a saved site first, then test." };
+    }
+
+    const res = await fetch("/api/push/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subscription: subscription.toJSON() }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      return { ok: false, error: (data && data.error) || "Couldn'"'"'t send the test notification." };
+    }
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "Something went wrong sending the test notification." };
   }
 }
