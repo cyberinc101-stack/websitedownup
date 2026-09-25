@@ -1,25 +1,3 @@
-/**
- * Homepage.
- *
- *   Outage alert (top 50 down, live)
- *   Row 1: checker                            | ad (300px)
- *   Row 2: popular sites header + filters     |
- *          site cards                         | Having problems right now
- *                                             | ad
- *                                             | Recently checked (10)
- *   Then: in-content ad + supporting copy + FAQ.
- *
- * Mobile: rails stack under their content, and a copy of "Having problems"
- * shows above the site cards so it isn't buried.
- *
- * Live data (no page reload needed):
- *   - popular statuses: server snapshot every 2 min, browsers poll every
- *     30s via PopularStatusProvider (alert bar, problems box, grid)
- *   - Recently checked: polls every 10s; the live monitor adds a real
- *     check every ~8s while people are on the site
- * No security logic here.
- */
-
 import { after } from "next/server";
 import HomeChecker from "@/components/HomeChecker";
 import AdSlot from "@/components/AdSlot";
@@ -80,6 +58,7 @@ export default async function HomePage() {
                 <ProblemsBox className="hidden lg:flex" />
                 <AdSlot className="min-h-[250px]" />
                 <LiveFeed initial={feed} limit={FEED_SIZE} />
+                <AdSlot className="min-h-[250px]" />
               </>
             }
           />
