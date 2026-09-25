@@ -23,11 +23,11 @@ export default function Header() {
             <span className="sm:hidden">Status</span>
             <span className="hidden sm:inline">Website Up or Down</span>
           </Link>
-          <SavedNavLink />
           <Link href="/worth" className="hover:text-ink transition-colors whitespace-nowrap">
             <span className="sm:hidden">Worth</span>
             <span className="hidden sm:inline">Website worth</span>
           </Link>
+          <SavedNavLink />
           <Link href="/about" className="hover:text-ink transition-colors">
             About
           </Link>
