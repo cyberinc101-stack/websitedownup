@@ -7,7 +7,7 @@
  *          site cards                         | Having problems right now
  *                                             | ad
  *                                             | Recently checked (10)
- *   Then: in-content ad + supporting copy.
+ *   Then: in-content ad + supporting copy + FAQ.
  *
  * Mobile: rails stack under their content, and a copy of "Having problems"
  * shows above the site cards so it isn't buried.
@@ -29,6 +29,7 @@ import ProblemsBox from "@/components/home/ProblemsBox";
 import LiveFeed from "@/components/home/LiveFeed";
 import PopularSitesExplorer from "@/components/home/PopularSitesExplorer";
 import { PopularStatusProvider } from "@/components/home/PopularStatusProvider";
+import FaqSection from "@/components/home/FaqSection";
 import { getPopularSnapshot } from "@/lib/server/popularStatus";
 import { getRecentActivity, runMonitorTick } from "@/lib/activity/checkActivity";
 import { SITE_NAME } from "@/lib/config/site";
@@ -105,6 +106,8 @@ export default async function HomePage() {
             the full report for that site for steps to try.
           </p>
         </section>
+
+        <FaqSection />
       </div>
     </PopularStatusProvider>
   );
