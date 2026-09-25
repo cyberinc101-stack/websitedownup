@@ -123,6 +123,27 @@ export default async function SiteDetailPage({
             a few minutes.
           </p>
         </section>
+
+        <section className="mt-8 text-sm text-muted leading-relaxed space-y-3">
+          <h2 className="font-display text-lg font-bold text-ink">
+            How this check works
+          </h2>
+          <p>
+            When you load this page, {SITE_NAME} makes a live connection to
+            {" " + report.domain} and records exactly how it responds &mdash;
+            the same request your own browser would make. Alongside the basic
+            up/down result, we run a handful of supporting checks: DNS
+            resolution, SSL certificate validity and expiry, domain
+            registration status, and which ports respond, all shown in the
+            cards above.
+          </p>
+          <p>
+            Want to keep an eye on {report.domain} going forward? Tap the
+            star next to its name to save it, then turn on alerts from your
+            saved sites page and we&apos;ll notify you the moment we detect
+            it&apos;s down.
+          </p>
+        </section>
       </AdRailLayout>
     </PopularStatusProvider>
   );
