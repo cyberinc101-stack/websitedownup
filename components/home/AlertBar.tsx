@@ -3,6 +3,8 @@
 /**
  * Outage alert strip at the top of the homepage. Appears only when one or
  * more of the top 50 popular sites is down, with each site's icon.
+ * Sites marked `unverified` (failing, but not seen working in the last 48
+ * hours, so almost certainly blocking automated checks) never trigger it.
  * Updates live (every 30s) from PopularStatusProvider, so it appears and
  * clears without a page reload.
  * Pure presentation, no security logic.
@@ -17,7 +19,7 @@ const MAX_NAMED = 6;
 
 export default function AlertBar() {
   const { sites } = usePopularSnapshot();
-  const down = sites.filter((s) => s.rank <= ALERT_TOP_N && s.state === "down");
+  const down = sites.filter((s) => s.rank <= ALERT_TOP_N && s.state === "down" && s.unverified !== true);
   if (down.length === 0) return null;
 
   const named = down.slice(0, MAX_NAMED);

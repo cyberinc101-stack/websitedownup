@@ -10,3 +10,4 @@ npm-debug.log*
 .DS_Store
 .vercel
 *-for-claude.txt
+tsconfig.tsbuildinfo

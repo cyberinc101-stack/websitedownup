@@ -6,6 +6,11 @@
  * (they respond, just slowly). Links to "#down" (alert bar) open the Down
  * filter.
  *
+ * Sites marked `unverified` (failing, but not seen working in the last 48
+ * hours, so almost certainly blocking automated checks) show a grey dot
+ * ("Can't be checked automatically"). They are not counted or listed as
+ * Down, and they only appear under All.
+ *
  * Layout: the header + filters sit above both columns, so the `rail`
  * (Having problems, ad, Recently checked) starts exactly level with the
  * first row of site cards. On mobile the rail stacks under the cards.
@@ -36,8 +41,16 @@ const DOT: Record<PopularState, { className: string; label: string }> = {
   down: { className: "bg-down", label: "Down" },
 };
 
+// Grey: the site blocks automated checks, so its status is unknown (never shown as Down).
+const UNVERIFIED_DOT = { className: "bg-muted", label: "Can't be checked automatically" };
+
 function isLive(s: PopularSiteStatus): boolean {
   return s.state !== "down";
+}
+
+/** Down and confirmed: it answered us recently, so this is a real outage. */
+function isDown(s: PopularSiteStatus): boolean {
+  return s.state === "down" && s.unverified !== true;
 }
 
 function FilterButton({
@@ -70,8 +83,8 @@ function FilterButton({
 }
 
 function SiteTile({ site }: { site: PopularSiteStatus }) {
-  const dot = DOT[site.state];
-  const down = site.state === "down";
+  const down = isDown(site);
+  const dot = site.state === "down" && !down ? UNVERIFIED_DOT : DOT[site.state];
   return (
     <Link
       href={"/site/" + site.domain}
@@ -120,9 +133,9 @@ export default function PopularSitesExplorer({ rail }: { rail?: ReactNode }) {
 
   const inScope = sites;
   const liveCount = inScope.filter(isLive).length;
-  const downCount = inScope.length - liveCount;
+  const downCount = inScope.filter(isDown).length;
   const shown =
-    status === "live" ? inScope.filter(isLive) : status === "down" ? inScope.filter((s) => !isLive(s)) : inScope;
+    status === "live" ? inScope.filter(isLive) : status === "down" ? inScope.filter(isDown) : inScope;
 
   return (
     <section ref={sectionRef} id="popular" className="scroll-mt-6">
