@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * Client body of /saved  the one screen for both saved sites and their
@@ -18,6 +18,7 @@ import Link from "next/link";
 import SiteLogo from "@/components/shared/SiteLogo";
 import SaveButton from "@/components/shared/SaveButton";
 import { useSavedSites, MAX_SAVED } from "@/lib/client/savedSites";
+import AdSlot from "@/components/AdSlot";
 
 const REFRESH_MS = 60000;
 
@@ -90,6 +91,8 @@ export default function SavedPageClient() {
         {sites.length} of {MAX_SAVED} saved. Turn on alerts to get a notification the moment a saved site goes
         down &mdash; this works even if your browser is closed.
       </p>
+
+      <AdSlot className="mb-8 min-h-[200px]" />
 
       {sites.length === 0 ? (
         <div className="rounded-xl border border-line bg-surface px-5 py-10 text-center">

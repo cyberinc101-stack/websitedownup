@@ -87,6 +87,8 @@ export default async function HomePage() {
         </section>
 
         <FaqSection />
+
+        <AdSlot className="mt-12" />
       </div>
     </PopularStatusProvider>
   );

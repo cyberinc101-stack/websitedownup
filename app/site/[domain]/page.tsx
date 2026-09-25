@@ -211,6 +211,7 @@ export default async function SiteDetailPage({
       <Suspense fallback={<ReportSkeleton />}>
         <ReportSection rawDomain={rawDomain} />
       </Suspense>
+          <AdSlot className="mt-12" />
     </AdRailLayout>
   );
 }
