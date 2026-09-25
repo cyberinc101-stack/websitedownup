@@ -5,7 +5,7 @@ import Link from "next/link";
 import SiteLogo from "@/components/shared/SiteLogo";
 import SaveButton from "@/components/shared/SaveButton";
 import { useSavedSites, MAX_SAVED } from "@/lib/client/savedSites";
-import { sendTestAlert } from "@/lib/client/pushAlerts";
+import { sendTestAlert, subscribeToDomain, unsubscribeFromDomain } from "@/lib/client/pushAlerts";
 import AdSlot from "@/components/AdSlot";
 
 const REFRESH_MS = 60000;
@@ -26,15 +26,35 @@ async function fetchStatus(domain: string): Promise<Status> {
 function BellButton({ domain }: { domain: string }) {
   const { isAlerting, toggleAlert } = useSavedSites();
   const on = isAlerting(domain);
+  const [busy, setBusy] = useState(false);
+
+  async function handleClick() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      if (on) {
+        toggleAlert(domain);
+        await unsubscribeFromDomain(domain);
+      } else {
+        const ok = await subscribeToDomain(domain);
+        if (ok) {
+          toggleAlert(domain);
+        }
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <button
       type="button"
-      onClick={() => toggleAlert(domain)}
+      onClick={handleClick}
+      disabled={busy}
       aria-pressed={on}
       title={on ? "Turn off alerts for this site" : "Get notified if this site goes down"}
       className={
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors shrink-0 " +
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors shrink-0 disabled:opacity-60 " +
         (on
           ? "border-signal bg-signal text-white"
           : "border-line bg-surface text-muted hover:text-ink hover:border-signal/40")
@@ -45,7 +65,7 @@ function BellButton({ domain }: { domain: string }) {
         <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
         <path d="M13.7 21a2 2 0 01-3.4 0" />
       </svg>
-      {on ? "Alerts on" : "Alert me"}
+      {busy ? "\u2026" : on ? "Alerts on" : "Alert me"}
     </button>
   );
 }
