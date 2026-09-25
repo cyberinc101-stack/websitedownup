@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { CONTACT_EMAIL, SITE_NAME } from "@/lib/config/site";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — PulseCheck",
-  description: "How PulseCheck handles data, cookies, and advertising.",
+  title: "Privacy Policy \u2014 " + SITE_NAME,
+  description: "How " + SITE_NAME + " handles data, cookies, and advertising.",
 };
 
 export default function PrivacyPage() {
@@ -13,9 +14,7 @@ export default function PrivacyPage() {
 
       <div className="text-muted leading-relaxed space-y-5 text-sm sm:text-base">
         <p>
-          This policy explains what happens when you use PulseCheck. It is a
-          general-purpose template — replace the placeholders below with
-          your own details before publishing.
+          This policy explains what happens when you use {SITE_NAME}.
         </p>
 
         <section>
@@ -42,7 +41,7 @@ export default function PrivacyPage() {
             cookies or similar technologies to serve ads based on your prior
             visits to this and other websites. You can learn more about how
             Google uses data and manage your ad preferences at{" "}
-            <a
+            
               href="https://policies.google.com/technologies/ads"
               className="text-signal hover:underline"
               target="_blank"
@@ -70,8 +69,12 @@ export default function PrivacyPage() {
             Contact
           </h2>
           <p>
-            Questions about this policy can be sent to{" "}
-            <span className="font-medium text-ink">[your contact email]</span>.
+            Questions about this policy, or requests regarding your data,
+            can be sent to{" "}
+            <a href={"mailto:" + CONTACT_EMAIL} className="font-medium text-signal hover:underline">
+              {CONTACT_EMAIL}
+            </a>
+            .
           </p>
         </section>
       </div>
