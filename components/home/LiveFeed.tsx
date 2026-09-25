@@ -10,9 +10,10 @@
  * Wording stays neutral ("Recently checked") because not every entry is a
  * visitor check. Each row has a save star (lib/client/savedSites.ts).
  *
- * Sized for the 300px right rail: fixed height with its own scroll, so it
- * never changes size whether empty, partially filled, or full -- matches
- * ProblemsBox's fixed-height pattern.
+ * Sized for the 300px right rail: fixed height with its own scroll (the
+ * scrollbar itself is hidden via .no-scrollbar, scrolling still works), so
+ * it never changes size whether empty, partially filled, or full --
+ * matches ProblemsBox's fixed-height pattern.
  *
  * Shows nothing when the feed is disabled (Redis not configured yet).
  * PRIVACY: shows domains and results only, never who checked them.
@@ -117,7 +118,7 @@ export default function LiveFeed({
       {shown.length === 0 ? (
         <p className="text-sm text-muted">Starting the live monitor&hellip; checks will appear here in a few seconds.</p>
       ) : (
-        <ul className="-mx-1.5 flex-1 space-y-0.5 overflow-y-auto pr-1" aria-live="polite">
+        <ul className="no-scrollbar -mx-1.5 flex-1 space-y-0.5 overflow-y-auto pr-1" aria-live="polite">
           {shown.map((item) => (
             <li key={keyOf(item)}>
               <Link

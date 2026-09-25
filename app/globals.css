@@ -31,3 +31,14 @@ body {
 .tabular {
   font-variant-numeric: tabular-nums;
 }
+
+/* Hides the scrollbar on elements that still need to scroll (rail boxes
+   like ProblemsBox / LiveFeed) while keeping mouse-wheel/touch scrolling
+   fully functional -- just the visible track/thumb is removed. */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* old Edge/IE */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, new Edge */
+}

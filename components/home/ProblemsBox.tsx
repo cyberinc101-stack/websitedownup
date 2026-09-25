@@ -4,9 +4,10 @@
  * "Having problems right now": popular sites (all 100) that are down or
  * slow in the latest snapshot, down first, then by popularity.
  * Updates live (every 30s) from PopularStatusProvider.
- * Sized for the 300px right rail: fixed height with its own scroll, so it
- * lines up with the ad containers. Shows an all-clear when nothing's wrong.
- * Pure presentation, no security logic.
+ * Sized for the 300px right rail: fixed height with its own scroll (the
+ * scrollbar itself is hidden via .no-scrollbar, scrolling still works),
+ * so it lines up with the ad containers. Shows an all-clear when nothing's
+ * wrong. Pure presentation, no security logic.
  */
 
 import Link from "next/link";
@@ -52,7 +53,7 @@ export default function ProblemsBox({ className = "" }: { className?: string }) 
           All {sites.length} popular sites are responding normally.
         </p>
       ) : (
-        <ul className="-mx-1.5 flex-1 space-y-0.5 overflow-y-auto pr-1">
+        <ul className="no-scrollbar -mx-1.5 flex-1 space-y-0.5 overflow-y-auto pr-1">
           {problems.map((site) => (
             <li key={site.domain}>
               <Link
