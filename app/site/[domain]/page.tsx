@@ -13,7 +13,7 @@ import AdRailLayout from "@/components/layout/AdRailLayout";
 import { PopularStatusProvider } from "@/components/home/PopularStatusProvider";
 import ProblemsBox from "@/components/home/ProblemsBox";
 import LiveFeed from "@/components/home/LiveFeed";
-import { SITE_NAME } from "@/lib/config/site";
+import { SITE_NAME, SITE_URL } from "@/lib/config/site";
 
 export const dynamic = "force-dynamic";
 // DNS, TLS and port checks need Node APIs, so this must not run on the Edge runtime.
@@ -101,8 +101,26 @@ async function ReportSection({ rawDomain }: { rawDomain: string }) {
   );
   after(runMonitorTick);
 
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: `Is ${report.domain} down?`,
+        item: `${SITE_URL}/site/${report.domain}`,
+      },
+    ],
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <div className="mt-4">
         <SiteStatusPanel initial={report} />
       </div>
