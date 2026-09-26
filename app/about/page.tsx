@@ -40,7 +40,7 @@ export default function AboutPage() {
           A check from our server reflects reachability from where our
           server sits on the internet at that moment — it can&apos;t see
           your specific connection, your ISP, or anything blocked by a local
-          firewall. If PulseCheck says a site is up but it still
+          firewall. If {SITE_NAME} says a site is up but it still
           won&apos;t load for you, the cause is more often local: a stale
           DNS cache, a network block, or a browser issue. Each site&apos;s
           page includes a short troubleshooting list for exactly that
