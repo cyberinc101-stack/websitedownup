@@ -20,11 +20,26 @@ const websiteSchema = {
   url: SITE_URL,
 };
 
+const HOME_DESCRIPTION =
+  "Check whether any website is down for everyone or just for you. Live, real-time reachability checks with response times for popular sites.";
+
 export const metadata: Metadata = {
   title: SITE_NAME,
-  description:
-    "Check whether any website is down for everyone or just for you. Live, real-time reachability checks with response times for popular sites.",
+  description: HOME_DESCRIPTION,
   metadataBase: new URL(SITE_URL),
+  alternates: { canonical: SITE_URL },
+  openGraph: {
+    title: SITE_NAME,
+    description: HOME_DESCRIPTION,
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: SITE_NAME,
+    description: HOME_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({

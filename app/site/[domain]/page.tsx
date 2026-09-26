@@ -15,6 +15,7 @@ import { PopularStatusProvider } from "@/components/home/PopularStatusProvider";
 import ProblemsBox from "@/components/home/ProblemsBox";
 import LiveFeed from "@/components/home/LiveFeed";
 import { SITE_NAME, SITE_URL } from "@/lib/config/site";
+import { isCuratedDomain } from "@/lib/seo/curatedDomains";
 
 export const dynamic = "force-dynamic";
 // DNS, TLS and port checks need Node APIs, so this must not run on the Edge runtime.
@@ -32,9 +33,35 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { domain: rawDomain } = await params;
   const domain = normalizeDomain(rawDomain);
+  const title = "Is " + domain + " down? \u2014 " + SITE_NAME;
+  const description = `Live status check for ${domain}. See if it's up right now, response time, SSL and domain expiry, and what to try if it won't load for you.`;
+  const url = SITE_URL + "/site/" + domain;
+  const curated = isCuratedDomain(domain);
+
   return {
-    title: "Is " + domain + " down? \u2014 " + SITE_NAME,
-    description: `Live status check for ${domain}. See if it's up right now, response time, SSL and domain expiry, and what to try if it won't load for you.`,
+    title,
+    description,
+    alternates: { canonical: url },
+    // Only the deliberately curated domains (popular sites + SEO_DOMAINS)
+    // are indexed. Arbitrary lookups still work fully; they just stay out
+    // of search results instead of looking like unbounded auto-generated
+    // pages.
+    robots: {
+      index: curated,
+      follow: true,
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: SITE_NAME,
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
   };
 }
 
