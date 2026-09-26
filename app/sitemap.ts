@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { POPULAR_SITES } from "@/lib/sites";
+import { SEO_DOMAINS } from "@/seo_engine/data/seoDomains";
 import { SITE_URL } from "@/lib/config/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -24,6 +25,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(),
   }));
 
-  return [...staticRoutes, ...siteRoutes];
-}
+  // Dedup against POPULAR_SITES so no domain gets two sitemap entries.
+  const popularDomainSet = new Set(POPULAR_SITES.map((s) => s.domain));
+  const seoRoutes = SEO_DOMAINS.filter((d) => !popularDomainSet.has(d.domain)).map(
+    (d) => ({
+      url: SITE_URL + "/site/" + d.domain,
+      lastModified: new Date(),
+    })
+  );
 
+  return [...staticRoutes, ...siteRoutes, ...seoRoutes];
+}
