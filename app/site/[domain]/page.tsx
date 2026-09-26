@@ -5,6 +5,7 @@ import { after } from "next/server";
 import type { Metadata } from "next";
 import { normalizeDomain } from "@/lib/checkSite";
 import { getCachedSiteReport } from "@/lib/server/siteReport";
+import { getUptimeStats } from "@/lib/server/domainHistory";
 import { getPopularSnapshot } from "@/lib/server/popularStatus";
 import { clientIpFrom, recordCheck, getRecentActivity, runMonitorTick } from "@/lib/activity/checkActivity";
 import SiteStatusPanel from "@/components/SiteStatusPanel";
@@ -85,6 +86,7 @@ function RailSkeleton() {
  */
 async function ReportSection({ rawDomain }: { rawDomain: string }) {
   const report = await getCachedSiteReport(rawDomain);
+  const uptimeStats = await getUptimeStats(report.domain);
 
   // Count this visit in the live feed / most checked lists, and give the
   // live monitor a chance to run its next tick too (same as the homepage).
@@ -122,7 +124,7 @@ async function ReportSection({ rawDomain }: { rawDomain: string }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
       <div className="mt-4">
-        <SiteStatusPanel initial={report} />
+        <SiteStatusPanel initial={report} uptimeStats={uptimeStats} />
       </div>
 
       <AdSlot className="mt-8" />

@@ -21,6 +21,8 @@ import DiagnosticCards from "./report/DiagnosticCards";
 import DetailTabs from "./report/DetailTabs";
 import type { Diagnostics } from "@/lib/diagnostics/types";
 import { SITE_NAME } from "@/lib/config/site";
+import type { UptimeStats } from "@/lib/server/domainHistory";
+import UptimeHistoryCard from "./report/UptimeHistoryCard";
 
 interface Result {
   domain: string;
@@ -32,7 +34,13 @@ interface Result {
   diagnostics?: Diagnostics | null;
 }
 
-export default function SiteStatusPanel({ initial }: { initial: Result }) {
+export default function SiteStatusPanel({
+  initial,
+  uptimeStats,
+}: {
+  initial: Result;
+  uptimeStats: UptimeStats;
+}) {
   const [result, setResult] = useState<Result>(initial);
   const [loading, setLoading] = useState(false);
 
@@ -94,6 +102,8 @@ export default function SiteStatusPanel({ initial }: { initial: Result }) {
       {d && <DiagnosticCards d={d} />}
 
       {d && <DetailTabs d={d} />}
+
+      <UptimeHistoryCard domain={result.domain} stats={uptimeStats} />
     </div>
   );
 }

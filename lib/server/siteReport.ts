@@ -26,6 +26,7 @@ import {
 import { isPublicHost } from "@/lib/security/ssrfGuard";
 import { runDiagnostics } from "@/lib/diagnostics/runDiagnostics";
 import type { Diagnostics } from "@/lib/diagnostics/types";
+import { recordDomainCheck } from "@/lib/server/domainHistory";
 
 export interface SiteReport extends CheckResult {
   diagnostics?: Diagnostics | null;
@@ -59,6 +60,11 @@ export async function getSiteReport(
     checkDomain(rawInput),
     runDiagnostics(rawInput),
   ]);
+  await recordDomainCheck(domain, {
+    status: result.status,
+    responseTimeMs: result.responseTimeMs,
+    checkedAt: result.checkedAt,
+  });
   return { ...result, diagnostics };
 }
 
