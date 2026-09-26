@@ -8,6 +8,7 @@ import LiveFeed from "@/components/home/LiveFeed";
 import PopularSitesExplorer from "@/components/home/PopularSitesExplorer";
 import { PopularStatusProvider } from "@/components/home/PopularStatusProvider";
 import FaqSection from "@/components/home/FaqSection";
+import StatusGuide from "@/components/home/StatusGuide";
 import { getPopularSnapshot, getProblemsSnapshot } from "@/lib/server/popularStatus";
 import { getRecentActivity, runMonitorTick } from "@/lib/activity/checkActivity";
 import { SITE_NAME } from "@/lib/config/site";
@@ -95,6 +96,8 @@ export default async function HomePage() {
             the full report for that site for steps to try.
           </p>
         </section>
+
+        <StatusGuide />
 
         <FaqSection />
 
