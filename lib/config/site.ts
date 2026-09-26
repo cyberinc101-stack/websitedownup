@@ -15,7 +15,7 @@ export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL || "https://web-site-down-oru-p.vercel.app"
 ).replace(/\/+$/, "");
 
-export const SITE_NAME = "Website Up or Down";
+export const SITE_NAME = "Website Worth Up or Down";
 
 /** Public contact address shown on /contact. */
 export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@example.com";

@@ -36,16 +36,39 @@ export default function PrivacyPage() {
             Cookies and advertising
           </h2>
           <p>
-            This site may display advertisements served by third-party
-            advertising companies, including Google. These companies may use
-            cookies or similar technologies to serve ads based on your prior
-            visits to this and other websites. You can learn more about how
-            Google uses data and manage your ad preferences at{" "}
-            
-              <a href="https://policies.google.com/technologies/ads" className="text-signal hover:underline" target="_blank" rel="noopener noreferrer">
+            We use Google AdSense to display advertisements on this site.
+            Google, as a third-party vendor, uses cookies (including the
+            DoubleClick DART cookie) to serve ads based on your prior visits
+            to this and other websites.
+          </p>
+          <p>
+            You may opt out of personalized advertising by visiting{" "}
+            <a href="https://adssettings.google.com" className="text-signal hover:underline" target="_blank" rel="noopener noreferrer">
+              Google Ads Settings
+            </a>
+            , or opt out of participating vendors&apos; use of cookies for
+            personalized advertising by visiting{" "}
+            <a href="https://optout.aboutads.info" className="text-signal hover:underline" target="_blank" rel="noopener noreferrer">
+              www.aboutads.info
+            </a>
+            . You can learn more about how Google uses data at{" "}
+            <a href="https://policies.google.com/technologies/ads" className="text-signal hover:underline" target="_blank" rel="noopener noreferrer">
               Google&apos;s Ads Policy page
             </a>
             .
+          </p>
+        </section>
+
+        <section>
+          <h2 className="font-display text-lg font-bold text-ink mb-2">
+            Analytics
+          </h2>
+          <p>
+            We use Google Analytics to understand how visitors use this
+            site in aggregate, such as which pages are viewed and how often.
+            Google Analytics uses cookies to collect this information; it is
+            used to improve the site and is not used to personally identify
+            you.
           </p>
         </section>
 
