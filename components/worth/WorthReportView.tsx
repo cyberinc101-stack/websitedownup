@@ -1,6 +1,7 @@
 /**
  * Lays out a finished Website Worth report: value, traffic and earnings,
- * an in-content ad, health score, site facts and the estimate disclaimer.
+ * an in-content ad, health score, site facts, the estimate disclaimer and
+ * the embeddable worth badge.
  * (The page adds the next ad below the report, so none is needed here.) No data or security logic. Contains no secrets.
  */
 
@@ -9,6 +10,7 @@ import ValueHero from "./ValueHero";
 import PeriodTable from "./PeriodTable";
 import HealthScore from "./HealthScore";
 import SiteFacts, { type SpeedStatus } from "./SiteFacts";
+import WorthBadgeEmbed from "./WorthBadgeEmbed";
 import type { SpeedResult, WorthReport, WorthSignals } from "@/lib/worth/types";
 
 export default function WorthReportView({
@@ -42,6 +44,8 @@ export default function WorthReportView({
         All figures are estimates based on public information, not the site&apos;s own analytics or accounts. Checked{" "}
         {new Date(report.checkedAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}.
       </p>
+
+      <WorthBadgeEmbed domain={report.domain} />
     </div>
   );
 }

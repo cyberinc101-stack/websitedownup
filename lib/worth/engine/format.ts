@@ -20,9 +20,10 @@ function trimZero(text: string): string {
   return text.replace(/\.0$/, "");
 }
 
-/** $0.42, $18, $2,400, $184K, $2.4M, $1.1B */
+/** $0.42, $18, $2,400, $184K, $2.4M, $1.1B, $1.3T */
 export function formatMoney(n: number): string {
   if (!Number.isFinite(n) || n <= 0) return "$0";
+  if (n >= 1e12) return "$" + trimZero((n / 1e12).toFixed(1)) + "T";
   if (n >= 1e9) return "$" + trimZero((n / 1e9).toFixed(1)) + "B";
   if (n >= 1e6) return "$" + trimZero((n / 1e6).toFixed(1)) + "M";
   if (n >= 1e5) return "$" + Math.round(n / 1e3) + "K";

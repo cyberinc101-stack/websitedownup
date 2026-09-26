@@ -10,7 +10,7 @@
 import { useState } from "react";
 import { SITE_NAME, SITE_URL } from "@/lib/config/site";
 
-function CopyBlock({ label, value }: { label: string; value: string }) {
+export function CopyBlock({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {

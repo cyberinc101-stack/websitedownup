@@ -46,3 +46,38 @@ export function renderStatusBadge(label: string, status: "up" | "down" | "unknow
     '</svg>'
   );
 }
+
+/**
+ * Label + value badge in the same style as the status badge, used by the
+ * Website Worth badges ("est. site value | $12.4K", "site health | 86/100").
+ * Width grows with the text, so any value fits. CLIENT-SAFE, pure.
+ */
+export function renderValueBadge(label: string, value: string, color: string, title?: string): string {
+  const displayLabel = escapeXml(label.length > 28 ? label.slice(0, 25) + "..." : label);
+  const displayValue = escapeXml(value.length > 24 ? value.slice(0, 21) + "..." : value);
+  const leftWidth = textWidth(displayLabel);
+  const rightWidth = textWidth(displayValue);
+  const totalWidth = leftWidth + rightWidth;
+  const safeColor = /^#[0-9a-fA-F]{3,8}$/.test(color) ? color : "#9e9e9e";
+  const tooltip = escapeXml(title || displayLabel + ": " + displayValue);
+
+  return (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="' + totalWidth + '" height="20" role="img" aria-label="' + displayLabel + ': ' + displayValue + '">' +
+    '<title>' + tooltip + '</title>' +
+    '<linearGradient id="s" x2="0" y2="100%">' +
+    '<stop offset="0" stop-color="#bbb" stop-opacity=".1"/>' +
+    '<stop offset="1" stop-opacity=".1"/>' +
+    '</linearGradient>' +
+    '<clipPath id="r"><rect width="' + totalWidth + '" height="20" rx="3" fill="#fff"/></clipPath>' +
+    '<g clip-path="url(#r)">' +
+    '<rect width="' + leftWidth + '" height="20" fill="#555"/>' +
+    '<rect x="' + leftWidth + '" width="' + rightWidth + '" height="20" fill="' + safeColor + '"/>' +
+    '<rect width="' + totalWidth + '" height="20" fill="url(#s)"/>' +
+    '</g>' +
+    '<g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="11">' +
+    '<text x="' + leftWidth / 2 + '" y="14">' + displayLabel + '</text>' +
+    '<text x="' + (leftWidth + rightWidth / 2) + '" y="14">' + displayValue + '</text>' +
+    '</g>' +
+    '</svg>'
+  );
+}
