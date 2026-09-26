@@ -2,7 +2,7 @@
  * SECURITY-CRITICAL FILE: SSRF (server-side request forgery) protection.
  * SERVER-ONLY: uses Node's dns/net modules.
  *
- * PulseCheck connects to whatever domain a visitor types in. Without this
+ * This site connects to whatever domain a visitor types in. Without this
  * guard, someone could enter a domain that resolves to an internal address
  * (127.0.0.1, 10.x.x.x, 169.254.169.254 cloud metadata, etc.) and use our
  * server to probe networks it should never reach.

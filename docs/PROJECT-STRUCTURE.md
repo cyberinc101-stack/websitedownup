@@ -1,6 +1,6 @@
 # Is Site Up project structure
 
-(Code folders and storage keys still use the old working name "pulsecheck"/"pc"; the visible name comes from `SITE_NAME` in `lib/config/site.ts`.)
+(Code folders and storage keys still use the original internal working name, abbreviated "pc"; the visible name comes from `SITE_NAME` in `lib/config/site.ts`.)
 
 A map of where things live and where new things should go.
 

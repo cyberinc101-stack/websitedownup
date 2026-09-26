@@ -10,7 +10,7 @@
  * An AdSense publisher ID is public by design, so it's fine here.
  */
 
-/** Your live domain, no trailing slash. e.g. https://pulsecheck.app */
+/** Your live domain, no trailing slash. e.g. https://example.com */
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL || "https://web-site-down-oru-p.vercel.app"
 ).replace(/\/+$/, "");

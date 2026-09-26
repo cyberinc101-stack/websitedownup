@@ -7,7 +7,7 @@
  * UNTRUSTED DATA: `sources` point at third-party sites. They are only ever
  * used as an img src (never as HTML), are https-only (enforced in
  * lib/diagnostics/pageMeta.ts), and are loaded with no-referrer so the
- * checked site can't see which PulseCheck page the visitor was on.
+ * checked site can't see which of our pages the visitor was on.
  * Images are loaded directly by the visitor's browser, NOT proxied through
  * our server, so there's no SSRF surface and no bandwidth cost for us.
  */

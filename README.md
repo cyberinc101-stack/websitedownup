@@ -1,4 +1,4 @@
-# PulseCheck
+# Website Worth Up or Down
 
 A "is it down or just me" website status checker, built with Next.js
 (App Router, TypeScript, Tailwind). Every check is a real, live HTTP
@@ -34,7 +34,7 @@ Open http://localhost:3000.
 
 ```
 git add .
-git commit -m "Initial PulseCheck site"
+git commit -m "Initial Website Worth Up or Down site"
 git push
 ```
 

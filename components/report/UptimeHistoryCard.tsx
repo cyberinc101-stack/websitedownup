@@ -1,6 +1,6 @@
 /**
  * Real, accumulating uptime history for this exact domain, built from every
- * check PulseCheck has actually run against it -- never fabricated or
+ * check we have actually run against it -- never fabricated or
  * estimated. A domain checked for the first time simply shows that instead
  * of a made-up percentage.
  * Pure presentation, no data or security logic.

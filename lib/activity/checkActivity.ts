@@ -122,7 +122,7 @@ export function clientIpFrom(headers: Headers): string {
 
 // PRIVACY: one-way hash so raw IPs are never written to storage.
 function hashIp(ip: string): string {
-  return createHash("sha256").update("pulsecheck-rate-limit:" + ip).digest("hex").slice(0, 24);
+  return createHash("sha256").update("rate-limit:" + ip).digest("hex").slice(0, 24);
 }
 
 async function resolvesPublicly(domain: string): Promise<boolean> {
