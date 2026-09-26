@@ -21,7 +21,7 @@ export default function Header() {
         <nav className="flex items-center gap-6 text-sm font-medium text-muted">
           <Link href="/" className="hover:text-ink transition-colors whitespace-nowrap">
             <span className="sm:hidden">Status</span>
-            <span className="hidden sm:inline">Website Up or Down</span>
+            <span className="hidden sm:inline">Status Checker</span>
           </Link>
           <Link href="/worth" className="hover:text-ink transition-colors whitespace-nowrap">
             <span className="sm:hidden">Worth</span>
