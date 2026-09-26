@@ -4,7 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PushServiceWorker from "@/components/PushServiceWorker";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
-import { SITE_NAME, SITE_URL } from "@/lib/config/site";
+import { SITE_NAME, SITE_URL, ADSENSE_PUBLISHER_ID } from "@/lib/config/site";
 
 const organizationSchema = {
   "@context": "https://schema.org",
@@ -35,6 +35,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {ADSENSE_PUBLISHER_ID && (
+          <script
+            async
+            src={"https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-" + ADSENSE_PUBLISHER_ID}
+            crossOrigin="anonymous"
+          />
+        )}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
