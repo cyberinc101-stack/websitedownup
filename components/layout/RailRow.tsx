@@ -6,7 +6,9 @@
  * Use inside a max-w-6xl page container. No data or security logic.
  */
 
-import type { ReactNode } from "react";
+import { isValidElement, type ReactNode } from "react";
+import AdSlot from "@/components/AdSlot";
+import { ADS_LIVE } from "@/lib/config/site";
 
 export default function RailRow({
   main,
@@ -17,10 +19,14 @@ export default function RailRow({
   rail?: ReactNode;
   className?: string;
 }) {
+  // A rail that is just an <AdSlot /> is dropped until ads are live, so the
+  // row doesn't reserve an empty 300px column. Other rail content stays.
+  const railIsOnlyAd = isValidElement(rail) && rail.type === AdSlot;
+  const shownRail = railIsOnlyAd && !ADS_LIVE ? null : rail;
   return (
-    <div className={"lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-8 " + className}>
+    <div className={(shownRail ? "lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-8 " : "") + className}>
       <div className="min-w-0">{main}</div>
-      {rail && <aside className="mt-6 space-y-6 lg:mt-0">{rail}</aside>}
+      {shownRail && <aside className="mt-6 space-y-6 lg:mt-0">{shownRail}</aside>}
     </div>
   );
 }

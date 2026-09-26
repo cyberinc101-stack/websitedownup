@@ -16,6 +16,7 @@
  */
 
 import type { ReactNode } from "react";
+import { ADS_LIVE } from "@/lib/config/site";
 
 export default function AdRailLayout({
   children,
@@ -28,16 +29,19 @@ export default function AdRailLayout({
   rail?: ReactNode;
   railBottom?: ReactNode;
 }) {
-  const hasRail = Boolean(railTop || rail || railBottom);
+  // `rail` is the ad slot: drop it until ads are live, so pages whose rail
+  // would only hold an ad use the full width instead of an empty column.
+  const adRail = ADS_LIVE ? rail : null;
+  const hasRail = Boolean(railTop || adRail || railBottom);
   return (
     <div className="mx-auto max-w-6xl px-5 sm:px-8 py-8 sm:py-12 lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-8">
       <div className="min-w-0">{children}</div>
       {hasRail && (
         <aside className="hidden lg:block space-y-6">
           {railTop}
-          {rail && (
+          {adRail && (
             <div className="sticky top-6 space-y-6" aria-label="Advertisement">
-              {rail}
+              {adRail}
             </div>
           )}
           {railBottom && <div className="space-y-6">{railBottom}</div>}
