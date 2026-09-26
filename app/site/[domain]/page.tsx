@@ -16,6 +16,7 @@ import { PopularStatusProvider } from "@/components/home/PopularStatusProvider";
 import ProblemsBox from "@/components/home/ProblemsBox";
 import LiveFeed from "@/components/home/LiveFeed";
 import { SITE_NAME, SITE_URL } from "@/lib/config/site";
+import { getCategoryForDomain } from "@/lib/categories";
 import { isCuratedDomain } from "@/lib/seo/curatedDomains";
 
 export const dynamic = "force-dynamic";
@@ -115,6 +116,7 @@ function RailSkeleton() {
 async function ReportSection({ rawDomain }: { rawDomain: string }) {
   const report = await getCachedSiteReport(rawDomain);
   const uptimeStats = await getUptimeStats(report.domain);
+  const category = getCategoryForDomain(report.domain);
 
   // Count this visit in the live feed / most checked lists, and give the
   // live monitor a chance to run its next tick too (same as the homepage).
@@ -217,6 +219,16 @@ async function ReportSection({ rawDomain }: { rawDomain: string }) {
           it&apos;s down.
         </p>
       </section>
+
+      {category && (
+        <p className="mt-3 text-xs text-muted">
+          See other{" "}
+          <Link href={"/category/" + category.slug} className="text-signal hover:underline">
+            {category.label} sites
+          </Link>
+          .
+        </p>
+      )}
 
       <EmbedBadge domain={report.domain} />
     </>

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { POPULAR_SITES } from "@/lib/sites";
 import { SEO_DOMAINS } from "@/seo_engine/data/seoDomains";
+import { listCategorySlugs } from "@/lib/categories";
 import { SITE_URL } from "@/lib/config/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -34,5 +35,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })
   );
 
-  return [...staticRoutes, ...siteRoutes, ...seoRoutes];
+  const categoryRoutes = listCategorySlugs().map((slug) => ({
+    url: SITE_URL + "/category/" + slug,
+    lastModified: new Date(),
+  }));
+
+  return [...staticRoutes, ...siteRoutes, ...seoRoutes, ...categoryRoutes];
 }
