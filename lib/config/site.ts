@@ -11,7 +11,9 @@
  */
 
 /** Your live domain, no trailing slash. e.g. https://pulsecheck.app */
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://example.com").replace(/\/+$/, "");
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL || "https://web-site-down-oru-p.vercel.app"
+).replace(/\/+$/, "");
 
 export const SITE_NAME = "Website Up or Down";
 
