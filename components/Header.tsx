@@ -18,7 +18,7 @@ export default function Header() {
             {SITE_NAME}
           </span>
         </Link>
-        <nav className="flex items-center gap-6 text-sm font-medium text-muted">
+        <nav className="flex items-center gap-4 sm:gap-6 text-sm font-medium text-muted">
           <Link href="/" className="hover:text-ink transition-colors whitespace-nowrap">
             <span className="sm:hidden">Status</span>
             <span className="hidden sm:inline">Status Checker</span>
@@ -27,8 +27,21 @@ export default function Header() {
             <span className="sm:hidden">Worth</span>
             <span className="hidden sm:inline">Website worth</span>
           </Link>
+          <Link
+            href="/app-worth"
+            className="hover:text-ink transition-colors whitespace-nowrap"
+            title="Works for Apple App Store apps only"
+          >
+            <span className="sm:hidden">Apps</span>
+            <span className="hidden sm:inline">
+              App worth{" "}
+              <span className="ml-0.5 rounded-full border border-line px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+                Apple only
+              </span>
+            </span>
+          </Link>
           <SavedNavLink />
-          <Link href="/about" className="hover:text-ink transition-colors">
+          <Link href="/about" className="hover:text-ink transition-colors hidden sm:inline">
             About
           </Link>
           <Link href="/contact" className="hover:text-ink transition-colors hidden sm:inline">
@@ -39,3 +52,4 @@ export default function Header() {
     </header>
   );
 }
+

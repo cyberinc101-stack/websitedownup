@@ -8,6 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes = [
     "",
     "/worth",
+    "/app-worth",
     "/tools/website-value-calculator",
     "/tools/website-revenue-calculator",
     "/tools/adsense-revenue-calculator",
