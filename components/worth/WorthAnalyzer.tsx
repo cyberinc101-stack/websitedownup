@@ -3,6 +3,8 @@
 /**
  * The Website Worth tool: domain form plus the live report.
  *
+ * The box takes a site name ("netflix") or an address, with suggestions
+ * (components/shared/SiteSearchBox.tsx).
  * The domain lives in the URL (/worth?domain=example.com), so every report
  * is shareable and the back button works. On a new domain it requests the
  * site facts (/api/worth) and the slower speed test (/api/worth/speed) in
@@ -15,6 +17,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { isLikelyValidDomain, normalizeDomain } from "@/lib/checkSite";
+import { resolveSiteInput, SITE_INPUT_MESSAGE } from "@/lib/siteSuggest";
+import SiteSearchBox, { SiteAddressTip } from "@/components/shared/SiteSearchBox";
 import { buildReport } from "@/lib/worth/engine/buildReport";
 import WorthReportView from "./WorthReportView";
 import type { SpeedStatus } from "./SiteFacts";
@@ -115,38 +119,39 @@ export default function WorthAnalyzer() {
     [signals, speed, speedStatus]
   );
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const domain = normalizeDomain(input);
-    if (!isLikelyValidDomain(domain)) {
-      setInputError("Enter a website address like example.com.");
-      return;
-    }
+  function openDomain(domain: string) {
     setInputError(null);
+    setInput(domain);
     if (domain !== queryDomain) {
       router.push("/worth?domain=" + encodeURIComponent(domain), { scroll: false });
     }
   }
 
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    // Accepts an address, a known site's name ("Wells Fargo") or one word ("netflix" -> netflix.com).
+    const domain = resolveSiteInput(input);
+    if (!domain) {
+      setInputError(SITE_INPUT_MESSAGE);
+      return;
+    }
+    openDomain(domain);
+  }
+
   return (
     <div>
       <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row" noValidate>
-        <label htmlFor="worth-domain" className="sr-only">
-          Website address
-        </label>
-        <input
+        <SiteSearchBox
           id="worth-domain"
-          type="text"
-          inputMode="url"
-          autoComplete="off"
-          autoCapitalize="off"
-          spellCheck={false}
-          placeholder="example.com"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
-          aria-invalid={inputError !== null}
-          aria-describedby={inputError ? "worth-domain-error" : undefined}
-          className="min-w-0 flex-1 rounded-xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-signal"
+          onChange={(v) => {
+            setInput(v);
+            if (inputError) setInputError(null);
+          }}
+          onPickDomain={openDomain}
+          currentDomain={queryDomain || null}
+          invalid={inputError !== null}
+          describedBy={inputError ? "worth-domain-error" : undefined}
         />
         <button
           type="submit"
@@ -156,6 +161,7 @@ export default function WorthAnalyzer() {
           {status === "loading" ? "Checking\u2026" : "Check worth"}
         </button>
       </form>
+      <SiteAddressTip />
       {inputError && (
         <p id="worth-domain-error" className="mt-2 text-sm text-ink" role="alert">
           {inputError}
@@ -181,3 +187,4 @@ export default function WorthAnalyzer() {
     </div>
   );
 }
+

@@ -3,12 +3,15 @@
 /**
  * The domain search box. Runs a quick check through /api/check (no
  * diagnostics, so it's fast) and links to the full report page.
+ * Takes a site name ("netflix") or an address, with suggestions
+ * (components/shared/SiteSearchBox.tsx).
  * SECURITY: the API route applies the SSRF guard; nothing to do here.
  */
 
 import { useState, FormEvent } from "react";
 import Link from "next/link";
-import { normalizeDomain } from "@/lib/checkSite";
+import { resolveSiteInput, SITE_INPUT_MESSAGE } from "@/lib/siteSuggest";
+import SiteSearchBox, { SiteAddressTip } from "@/components/shared/SiteSearchBox";
 import StatusBadge from "./StatusBadge";
 
 interface Result {
@@ -29,20 +32,21 @@ export default function DomainChecker({
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    const trimmed = value.trim();
-    if (!trimmed) return;
+  const [inputError, setInputError] = useState<string | null>(null);
+
+  async function runCheck(domain: string) {
+    setValue(domain);
+    setInputError(null);
     setLoading(true);
     setResult(null);
     try {
-      const res = await fetch("/api/check?domain=" + encodeURIComponent(trimmed));
+      const res = await fetch("/api/check?domain=" + encodeURIComponent(domain));
       const data: Result = await res.json();
       setResult(data);
-      onChecked?.(normalizeDomain(trimmed), data.status);
+      onChecked?.(domain, data.status);
     } catch {
       setResult({
-        domain: normalizeDomain(trimmed),
+        domain,
         status: "down",
         statusCode: null,
         responseTimeMs: null,
@@ -54,16 +58,36 @@ export default function DomainChecker({
     }
   }
 
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!value.trim()) return;
+    // Accepts an address, a known site's name ("Wells Fargo") or one word ("netflix" -> netflix.com).
+    const domain = resolveSiteInput(value);
+    if (!domain) {
+      setInputError(SITE_INPUT_MESSAGE);
+      return;
+    }
+    runCheck(domain);
+  }
+
   return (
     <div className="w-full">
       <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
-        <input
-          type="text"
+        <SiteSearchBox
+          id="domain-check"
           value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder="Enter a domain, e.g. facebook.com"
-          className="flex-1 h-13 px-4 py-3.5 rounded-xl border border-line bg-white text-base text-ink placeholder:text-muted/70 focus:border-signal focus:ring-2 focus:ring-signal/20 outline-none transition-shadow"
-          aria-label="Domain to check"
+          onChange={(v) => {
+            setValue(v);
+            if (inputError) setInputError(null);
+          }}
+          onPickDomain={(domain) => {
+            if (!loading) runCheck(domain);
+          }}
+          currentDomain={result ? result.domain : null}
+          invalid={inputError !== null}
+          describedBy={inputError ? "domain-check-error" : undefined}
+          placeholder="Website name or address"
+          inputClassName="w-full h-13 px-4 py-3.5 rounded-xl border border-line bg-white text-base text-ink placeholder:text-muted/70 focus:border-signal focus:ring-2 focus:ring-signal/20 outline-none transition-shadow"
         />
         <button
           type="submit"
@@ -80,6 +104,12 @@ export default function DomainChecker({
           <span className="absolute inset-y-0 left-0 w-1/3 rounded-full bg-signal animate-sweep" />
         )}
       </div>
+      <SiteAddressTip />
+      {inputError && (
+        <p id="domain-check-error" className="mt-2 text-sm text-ink" role="alert">
+          {inputError}
+        </p>
+      )}
 
       {result && (
         <div

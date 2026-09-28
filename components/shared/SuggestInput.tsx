@@ -62,6 +62,7 @@ export default function SuggestInput({
   inputMode = "text",
   invalid = false,
   describedBy,
+  inputClassName,
 }: {
   id: string;
   label: string;
@@ -76,6 +77,8 @@ export default function SuggestInput({
   inputMode?: "text" | "url" | "search";
   invalid?: boolean;
   describedBy?: string;
+  /** Replaces the default input styling. */
+  inputClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
@@ -150,7 +153,10 @@ export default function SuggestInput({
         onKeyDown={onKeyDown}
         aria-invalid={invalid}
         aria-describedby={describedBy}
-        className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-signal"
+        className={
+          inputClassName ??
+          "w-full rounded-xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-signal"
+        }
       />
       <ul
         id={listId}
