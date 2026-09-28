@@ -23,10 +23,10 @@
 export const MONETAG_VERIFICATION_TAG = `<meta name="monetag" content="0584363c3f525e46e5be38b545b28be5">`;
 
 /** Vignette Banner code. */
-export const MONETAG_VIGNETTE_CODE = ``;
+export const MONETAG_VIGNETTE_CODE = `<script>(function(s){s.dataset.zone='11910476',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>`;
 
 /** In-Page Push code. */
-export const MONETAG_IN_PAGE_PUSH_CODE = ``;
+export const MONETAG_IN_PAGE_PUSH_CODE = `<script>(function(s){s.dataset.zone='11910470',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>`;
 
 // ---------------------------------------------------------------------------
 // Parsing (no need to edit below).
