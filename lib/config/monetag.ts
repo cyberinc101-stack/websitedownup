@@ -68,4 +68,4 @@ export const MONETAG_IN_PAGE_PUSH = parseMonetagCode(MONETAG_IN_PAGE_PUSH_CODE);
 export const MONETAG_VERIFICATION = parseVerificationTag(MONETAG_VERIFICATION_TAG);
 
 /** Monetag SmartLink (https) for the leave-site gate. Empty = no ad step. */
-export const MONETAG_SMARTLINK = "";
+export const MONETAG_SMARTLINK = "https://omg10.com/4/11910746";
