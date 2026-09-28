@@ -4,6 +4,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PushServiceWorker from "@/components/PushServiceWorker";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
+import MonetagAds from "@/components/ads/MonetagAds";
+import { MONETAG_VERIFICATION } from "@/lib/config/monetag";
 import { SITE_NAME, SITE_URL, ADSENSE_PUBLISHER_ID } from "@/lib/config/site";
 
 const organizationSchema = {
@@ -40,6 +42,8 @@ export const metadata: Metadata = {
     title: SITE_NAME,
     description: HOME_DESCRIPTION,
   },
+  // Monetag site verification (lib/config/monetag.ts).
+  ...(MONETAG_VERIFICATION ? { other: { [MONETAG_VERIFICATION.name]: MONETAG_VERIFICATION.content } } : {}),
 };
 
 export default function RootLayout({
@@ -72,6 +76,7 @@ export default function RootLayout({
         <PushServiceWorker />
         <main className="flex-1">{children}</main>
         <Footer />
+        <MonetagAds />
       </body>
     </html>
   );
