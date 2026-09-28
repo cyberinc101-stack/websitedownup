@@ -147,3 +147,17 @@ export interface AppReport {
 
 /** What /api/app-worth returns. */
 export type AppLookupResponse = { ok: true; signals: AppSignals } | { ok: false; error: string };
+
+/** One match from the App Store name search. UNTRUSTED text: render as plain text. */
+export interface AppSearchResult {
+  id: string;
+  name: string;
+  developer: string | null;
+  iconUrl: string | null;
+  rating: number | null;
+  ratingCount: number | null;
+  price: number;
+}
+
+/** What /api/app-search returns. */
+export type AppSearchResponse = { ok: true; results: AppSearchResult[] } | { ok: false; error: string };

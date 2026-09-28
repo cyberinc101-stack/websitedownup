@@ -17,7 +17,7 @@ export const APP_WORTH_PAGE: SeoPage = {
     "Estimate what any iPhone or iPad app is worth and makes per day, week, month and year: revenue, profit, downloads, active users and chart ranks.",
   h1: "App worth calculator",
   intro:
-    "Paste an App Store link to see what an iPhone or iPad app is worth, how much it earns per day, week, month and year, and how many people use it. Works for App Store apps only.",
+    "Type an app's name or paste its App Store link to see what an iPhone or iPad app is worth, how much it earns per day, week, month and year, and how many people use it. Works for App Store apps only.",
 
   sections: [
     {
@@ -73,12 +73,16 @@ export const APP_WORTH_PAGE: SeoPage = {
 
   faqs: [
     {
+      q: "How do I check an app?",
+      a: "Start typing the app's name and pick it from the list. You can also paste its App Store link: on iPhone, open the app in the App Store, tap Share, then Copy Link.",
+    },
+    {
       q: "How much is my app worth?",
       a: "Most profitable apps sell for 18 to 48 months of profit, with 24 to 36 months typical. An app making $1,000 a month in profit might sell for $24,000 to $36,000, more if most of that is subscription revenue.",
     },
     {
       q: "How much does an app make per day?",
-      a: "Paste its App Store link and the report estimates revenue and profit per day, week, month and year. For most apps it's a few dollars a day or less; apps in the US Top Grossing chart make tens of thousands to millions.",
+      a: "Search for it by name and the report estimates revenue and profit per day, week, month and year. For most apps it's a few dollars a day or less; apps in the US Top Grossing chart make tens of thousands to millions.",
     },
     {
       q: "How much does an app make per download?",

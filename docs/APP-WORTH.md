@@ -12,12 +12,15 @@ uses is free and public.
 ```
 app/app-worth/page.tsx            Route (thin)
 app/api/app-worth/route.ts        GET /api/app-worth?app=<App Store link or id>
+app/api/app-search/route.ts       GET /api/app-search?q=<app name> (name search dropdown)
 seo/pages/app-worth.ts            All search-facing copy for the page
 components/apps/                  Tool UI (lookup, report sections, own numbers)
 lib/apps/parseAppInput.ts         Link / id parsing (Google Play links get a friendly "not supported")
 lib/apps/engine/estimateApp.ts    Estimate maths (runs in the browser)
 lib/apps/sources/                 App Store listing + chart lookups (server-only)
-lib/server/appSignals.ts          Cached entry point used by the API route
+lib/server/appSignals.ts          Cached entry point used by /api/app-worth
+lib/server/appSearch.ts           Cached entry point used by /api/app-search
+components/shared/SuggestInput.tsx  Search box with dropdown (shared with the website boxes)
 data/apps/appCategories.ts        Category figures (active users, revenue per user), rating countries
 ```
 
@@ -36,6 +39,12 @@ under it:
 - Each app is cached for 24 hours (repeat searches cost nothing).
 - The three charts are cached for 3 hours and shared by every lookup.
 - The API route allows 10 lookups per minute per visitor.
+- Name search: the browser waits until typing pauses (350 ms) before
+  asking, remembers answers for the visit, and each search term is cached
+  on the server for 24 hours, so popular names hit Apple once a day.
+  Searches are limited to 30 per minute per visitor.
+- If search ever stops answering, the box says so and pasting a link still
+  works.
 
 Failed lookups are never cached, so a temporary error clears on retry.
 The Top Grossing chart is best-effort: if it can't be read the report says
