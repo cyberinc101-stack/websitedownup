@@ -66,7 +66,7 @@ export default function AppValueHero({ report }: { report: AppReport }) {
       <div className="flex items-center gap-3">
         <AppIcon name={l.name} iconUrl={l.iconUrl} />
         <div className="min-w-0">
-          <p className="font-display font-bold text-ink truncate">{l.name}</p>
+          <a href={"/go/app/" + l.id} target="_blank" rel="noopener nofollow" className="block font-display font-bold text-ink truncate hover:text-signal hover:underline">{l.name}</a>
           <p className="text-xs text-muted truncate">
             {(l.developer ? l.developer + " · " : "") + "Estimated app value"}
           </p>

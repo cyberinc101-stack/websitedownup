@@ -66,3 +66,6 @@ export function parseVerificationTag(tag: string): { name: string; content: stri
 export const MONETAG_VIGNETTE = parseMonetagCode(MONETAG_VIGNETTE_CODE);
 export const MONETAG_IN_PAGE_PUSH = parseMonetagCode(MONETAG_IN_PAGE_PUSH_CODE);
 export const MONETAG_VERIFICATION = parseVerificationTag(MONETAG_VERIFICATION_TAG);
+
+/** Monetag SmartLink (https) for the leave-site gate. Empty = no ad step. */
+export const MONETAG_SMARTLINK = "";

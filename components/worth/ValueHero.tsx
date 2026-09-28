@@ -58,7 +58,7 @@ export default function ValueHero({ report, iconUrl }: { report: WorthReport; ic
           </span>
         )}
         <div className="min-w-0">
-          <p className="font-display font-bold text-ink truncate">{report.domain}</p>
+          <a href={"/go/" + encodeURIComponent(report.domain)} target="_blank" rel="noopener nofollow" className="block font-display font-bold text-ink truncate hover:text-signal hover:underline">{report.domain}</a>
           <p className="text-xs text-muted">Estimated website value</p>
         </div>
       </div>

@@ -34,7 +34,7 @@ export default function AppReportView({ report }: { report: AppReport }) {
       <p className="mt-6 text-xs text-muted leading-relaxed">
         All figures are estimates from the public App Store listing, not the app&apos;s own sales data. Checked{" "}
         {new Date(report.signals.checkedAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}.{" "}
-        <a href={l.storeUrl} target="_blank" rel="noopener noreferrer nofollow" className="text-signal hover:underline">
+        <a href={"/go/app/" + l.id} target="_blank" rel="noopener nofollow" className="text-signal hover:underline">
           View on the App Store
         </a>
       </p>
