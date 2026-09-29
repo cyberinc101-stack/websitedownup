@@ -28,6 +28,37 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const FEED_SIZE = 10;
+const RELATED_COUNT = 8;
+
+/** Friendly name for a domain ("Netflix" for netflix.com), or the domain itself. */
+function displayNameFor(domain: string): string {
+  const category = getCategoryForDomain(domain);
+  const entry = category?.entries.find((e) => e.domain.toLowerCase() === domain.toLowerCase());
+  return entry && entry.name && entry.name !== entry.domain ? entry.name : domain;
+}
+
+/**
+ * Other sites from the same category, starting just after this one in the
+ * list and wrapping around. Every page therefore links to a different set
+ * of neighbours, which spreads internal links across the whole category
+ * instead of piling them on the first few entries.
+ */
+function relatedSitesFor(domain: string, limit: number) {
+  const category = getCategoryForDomain(domain);
+  if (!category) return [];
+  const list = category.entries;
+  const lower = domain.toLowerCase();
+  const idx = Math.max(
+    0,
+    list.findIndex((e) => e.domain.toLowerCase() === lower)
+  );
+  const out: { domain: string; name: string }[] = [];
+  for (let step = 1; step < list.length && out.length < limit; step++) {
+    const entry = list[(idx + step) % list.length];
+    if (entry.domain.toLowerCase() !== lower) out.push(entry);
+  }
+  return out;
+}
 
 export async function generateMetadata({
   params,
@@ -36,8 +67,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { domain: rawDomain } = await params;
   const domain = normalizeDomain(rawDomain);
-  const title = "Is " + domain + " down? \u2014 " + SITE_NAME;
-  const description = `Live status check for ${domain}. See if it's up right now, response time, SSL and domain expiry, and what to try if it won't load for you.`;
+  const label = displayNameFor(domain);
+  const title = "Is " + label + " down? Live status & outage check \u2014 " + SITE_NAME;
+  const description =
+    `Is ${label}${label !== domain ? " (" + domain + ")" : ""} down right now? Live status check with response time, SSL certificate and domain expiry, plus what to try if ${domain} won't load for you.`;
   const url = SITE_URL + "/site/" + domain;
   const curated = isCuratedDomain(domain);
 
@@ -111,13 +144,15 @@ function RailSkeleton() {
 
 /**
  * Awaits the full site report (status + diagnostics) and renders the report
- * card plus the two write-up sections below it. Rendered inside a Suspense
+ * card plus the write-up sections below it. Rendered inside a Suspense
  * boundary so the nav link, ads and rail don't wait on it.
  */
 async function ReportSection({ rawDomain }: { rawDomain: string }) {
   const report = await getCachedSiteReport(rawDomain);
   const uptimeStats = await getUptimeStats(report.domain);
   const category = getCategoryForDomain(report.domain);
+  const label = displayNameFor(report.domain);
+  const related = relatedSitesFor(report.domain, RELATED_COUNT);
 
   // Count this visit in the live feed / most checked lists, and give the
   // live monitor a chance to run its next tick too (same as the homepage).
@@ -134,19 +169,29 @@ async function ReportSection({ rawDomain }: { rawDomain: string }) {
   );
   after(runMonitorTick);
 
+  const breadcrumbItems = [
+    { name: "Home", item: SITE_URL },
+    ...(category
+      ? [{ name: category.label + " sites", item: SITE_URL + "/category/" + category.slug }]
+      : []),
+    { name: `Is ${label} down?`, item: `${SITE_URL}/site/${report.domain}` },
+  ];
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: `Is ${report.domain} down?`,
-        item: `${SITE_URL}/site/${report.domain}`,
-      },
-    ],
+    itemListElement: breadcrumbItems.map((b, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: b.name,
+      item: b.item,
+    })),
   };
+
+  const isUp = report.status === "up";
+  const timing =
+    typeof report.responseTimeMs === "number"
+      ? ` in about ${Math.round(report.responseTimeMs)} ms`
+      : "";
 
   return (
     <>
@@ -164,7 +209,18 @@ async function ReportSection({ rawDomain }: { rawDomain: string }) {
 
       <section className="mt-8 text-sm text-muted leading-relaxed space-y-4">
         <h2 className="font-display text-lg font-bold text-ink">
-          {report.status === "up"
+          Is {label} down right now?
+        </h2>
+        <p>
+          {isUp
+            ? `Our latest live check reached ${report.domain} and it responded normally${timing}. If ${label} still won't open for you, the problem is most likely on your side, such as your network, DNS or browser, and the fixes below usually sort it out.`
+            : `Our latest live check did not get a normal response from ${report.domain}, so ${label} may be down or having problems right now. Check the response and SSL details above, and see how many other visitors have reported a problem.`}
+        </p>
+      </section>
+
+      <section className="mt-8 text-sm text-muted leading-relaxed space-y-4">
+        <h2 className="font-display text-lg font-bold text-ink">
+          {isUp
             ? `${report.domain} looks reachable from here \u2014 but still can't load it?`
             : `What to try if ${report.domain} won't load`}
         </h2>
@@ -221,16 +277,43 @@ async function ReportSection({ rawDomain }: { rawDomain: string }) {
           saved sites page and we&apos;ll notify you the moment we detect
           it&apos;s down.
         </p>
-      </section>
-
-      {category && (
-        <p className="mt-3 text-xs text-muted">
-          See other{" "}
-          <Link href={"/category/" + category.slug} className="text-signal hover:underline">
-            {category.label} sites
+        <p>
+          Curious about the business side? See{" "}
+          <Link href="/worth" className="text-signal hover:underline">
+            what a website like {label} could be worth
           </Link>
           .
         </p>
+      </section>
+
+      {related.length > 0 && (
+        <section className="mt-8">
+          <h2 className="font-display text-lg font-bold text-ink">
+            {category ? "Other " + category.label.toLowerCase() + " sites" : "Similar sites"}
+          </h2>
+          <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {related.map((r) => (
+              <li key={r.domain}>
+                <Link
+                  href={"/site/" + r.domain}
+                  className="block rounded-lg border border-line bg-white/70 px-3 py-2 text-sm text-ink hover:border-signal/50 transition-colors truncate"
+                >
+                  Is {r.name !== r.domain ? r.name : r.domain} down?
+                  <span className="block text-xs text-muted truncate">{r.domain}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          {category && (
+            <p className="mt-3 text-xs text-muted">
+              See all{" "}
+              <Link href={"/category/" + category.slug} className="text-signal hover:underline">
+                {category.label} sites
+              </Link>
+              .
+            </p>
+          )}
+        </section>
       )}
 
       <EmbedBadge domain={report.domain} />
@@ -276,7 +359,7 @@ export default async function SiteDetailPage({
       <Suspense fallback={<ReportSkeleton />}>
         <ReportSection rawDomain={rawDomain} />
       </Suspense>
-          <AdSlot className="mt-12" />
+      <AdSlot className="mt-12" />
     </AdRailLayout>
   );
 }
