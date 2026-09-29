@@ -205,6 +205,8 @@ async function ReportSection({ rawDomain }: { rawDomain: string }) {
 
       <ReportProblemButton domain={report.domain} />
 
+      <p className="mt-3 text-xs text-muted">Own or run {report.domain}? <a href="#embed" className="text-signal hover:underline">Add a live status badge to your site</a>.</p>
+
       <AdSlot className="mt-8" />
 
       <section className="mt-8 text-sm text-muted leading-relaxed space-y-4">
@@ -316,7 +318,7 @@ async function ReportSection({ rawDomain }: { rawDomain: string }) {
         </section>
       )}
 
-      <EmbedBadge domain={report.domain} />
+      <div id="embed" className="scroll-mt-20"><EmbedBadge domain={report.domain} /></div>
     </>
   );
 }
