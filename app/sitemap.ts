@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { POPULAR_SITES } from "@/lib/sites";
-import { SEO_DOMAINS } from "@/seo_engine/data/seoDomains";
+import { SEO_DOMAINS } from "@/seo_engine/data/allSeoDomains";
 import { listCategorySlugs } from "@/lib/categories";
 import { SITE_URL } from "@/lib/config/site";
 

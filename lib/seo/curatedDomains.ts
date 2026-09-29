@@ -10,7 +10,7 @@
  */
 
 import { POPULAR_SITES } from "@/lib/sites";
-import { SEO_DOMAINS } from "@/seo_engine/data/seoDomains";
+import { SEO_DOMAINS } from "@/seo_engine/data/allSeoDomains";
 
 let cachedSet: Set<string> | null = null;
 

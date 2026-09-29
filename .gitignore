@@ -11,3 +11,6 @@ npm-debug.log*
 .vercel
 *-for-claude.txt
 tsconfig.tsbuildinfo
+
+seo-for-claude*.txt
+new-domains.txt
