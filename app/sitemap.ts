@@ -14,6 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/tools/adsense-revenue-calculator",
     "/tools/rpm-calculator",
     "/tools/website-traffic-value-calculator",
+    "/category",
     "/about",
     "/contact",
     "/privacy",
