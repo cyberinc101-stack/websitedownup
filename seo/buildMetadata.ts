@@ -9,7 +9,7 @@ import { SITE_NAME, SITE_URL } from "@/lib/config/site";
 import type { SeoPage } from "./types";
 
 export function buildMetadata(page: SeoPage): Metadata {
-  const title = page.title + " \u2014 " + SITE_NAME;
+  const title = page.title + " — " + SITE_NAME;
   return {
     title,
     description: page.description,
@@ -22,7 +22,7 @@ export function buildMetadata(page: SeoPage): Metadata {
       type: "website",
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description: page.description,
     },

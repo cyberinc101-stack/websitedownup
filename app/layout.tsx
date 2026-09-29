@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import PushServiceWorker from "@/components/PushServiceWorker";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import MonetagAds from "@/components/ads/MonetagAds";
+import StickyMobileAd from "@/components/ads/StickyMobileAd";
 import { MONETAG_VERIFICATION } from "@/lib/config/monetag";
 import { SITE_NAME, SITE_URL, ADSENSE_PUBLISHER_ID } from "@/lib/config/site";
 
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: SITE_NAME,
     description: HOME_DESCRIPTION,
   },
@@ -77,6 +78,7 @@ export default function RootLayout({
         <main className="flex-1">{children}</main>
         <Footer />
         <MonetagAds />
+        <StickyMobileAd />
       </body>
     </html>
   );
