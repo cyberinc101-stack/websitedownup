@@ -34,6 +34,7 @@ const MAX_CACHED_RESULTS = 1000;
 const MAX_ATTEMPTS = 3;
 const MAX_TEXT_LENGTH = 100;
 const DAY_MS = 86400000;
+const OVERALL_BUDGET_MS = 7000; // hard cap so one slow registry never blocks the whole report
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -201,10 +202,7 @@ function cacheResult(domain: string, info: DomainInfo): void {
   resultCache.set(domain, { info, at: Date.now() });
 }
 
-export async function lookupDomainExpiry(domain: string): Promise<DomainInfo> {
-  const cached = resultCache.get(domain);
-  if (cached && Date.now() - cached.at < RESULT_TTL_MS) return cached.info;
-
+async function performLookup(domain: string): Promise<DomainInfo> {
   const registries = await getRegistryMap();
   const tld = domain.split(".").pop() || "";
   const registryBase = registries ? registries.get(tld) ?? null : null;
@@ -248,4 +246,23 @@ export async function lookupDomainExpiry(domain: string): Promise<DomainInfo> {
   }
 
   return emptyDomain("Registration details aren't published for this domain extension.");
+}
+
+/**
+ * Public entry point: same result as performLookup, but never takes longer
+ * than OVERALL_BUDGET_MS. A slow or unresponsive registry falls back to an
+ * "unavailable" result instead of blocking the rest of the report; the real
+ * lookup keeps running in the background and still populates the cache for
+ * next time.
+ */
+export async function lookupDomainExpiry(domain: string): Promise<DomainInfo> {
+  const cached = resultCache.get(domain);
+  if (cached && Date.now() - cached.at < RESULT_TTL_MS) return cached.info;
+
+  return Promise.race([
+    performLookup(domain),
+    new Promise<DomainInfo>((resolve) =>
+      setTimeout(() => resolve(emptyDomain("Registration details are taking longer than usual to load.")), OVERALL_BUDGET_MS)
+    ),
+  ]);
 }
