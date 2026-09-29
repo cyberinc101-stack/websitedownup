@@ -11,6 +11,14 @@
  * ("Can't be checked automatically"). They are not counted or listed as
  * Down, and they only appear under All.
  *
+ * A site that IS confirmed down still fails for a specific reason (timed
+ * out, refused the connection, returned an HTTP error, ...) -- showing the
+ * bare word "Down" for all of those is misleading, since to a visitor it
+ * reads as "the site is offline" when it might just be blocking automated
+ * checkers. downReason() turns lib/checkSite.ts's error string into a short
+ * label (e.g. "No response", "Timed out", "HTTP 503") shown on the tile
+ * instead of "Down", with the full error text still available on hover.
+ *
  * Layout: the header + filters sit above both columns, so the `rail`
  * (Having problems, ad, Recently checked) starts exactly level with the
  * first row of site cards. On mobile the rail stacks under the cards.
@@ -53,6 +61,21 @@ function isDown(s: PopularSiteStatus): boolean {
   return s.state === "down" && s.unverified !== true;
 }
 
+/**
+ * Turns lib/checkSite.ts's error string into a short label for the tile,
+ * so "Down" doesn't get shown when what actually happened was a timeout,
+ * a refused connection, or an HTTP error from the site itself. Falls back
+ * to "Down" only when there's no error text to go on.
+ */
+function downReason(error: string | null): string {
+  if (!error) return "Down";
+  const httpMatch = error.match(/HTTP (\d{3})/);
+  if (httpMatch) return "HTTP " + httpMatch[1];
+  if (error.includes("took too long")) return "Timed out";
+  if (error.includes("could not be reached")) return "No response";
+  return "Down";
+}
+
 function FilterButton({
   active,
   tone = "default",
@@ -85,6 +108,7 @@ function FilterButton({
 function SiteTile({ site }: { site: PopularSiteStatus }) {
   const down = isDown(site);
   const dot = site.state === "down" && !down ? UNVERIFIED_DOT : DOT[site.state];
+  const reason = down ? downReason(site.error) : dot.label;
   return (
     <Link
       href={"/site/" + site.domain}
@@ -96,8 +120,9 @@ function SiteTile({ site }: { site: PopularSiteStatus }) {
         " (" +
         site.category +
         "): " +
-        dot.label +
-        (site.responseTimeMs !== null ? " \u2014 " + site.responseTimeMs + " ms" : "")
+        reason +
+        (down && site.error ? " (" + site.error + ")" : "") +
+        (site.responseTimeMs !== null ? " — " + site.responseTimeMs + " ms" : "")
       }
       className={
         "flex items-center gap-2 rounded-lg border px-2.5 py-2 hover:shadow-card transition-all min-w-0 " +
@@ -106,7 +131,7 @@ function SiteTile({ site }: { site: PopularSiteStatus }) {
     >
       <SiteLogo domain={site.domain} className="h-6 w-6 rounded shrink-0" />
       <span className="text-sm font-medium text-ink truncate flex-1 min-w-0">{site.name}</span>
-      {down && <span className="text-[11px] font-semibold text-down shrink-0">Down</span>}
+      {down && <span className="text-[11px] font-semibold text-down shrink-0">{reason}</span>}
       <SaveButton domain={site.domain} />
       <span className={"h-2 w-2 rounded-full shrink-0 " + dot.className} aria-label={dot.label} />
     </Link>

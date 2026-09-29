@@ -2,9 +2,10 @@
 
 /**
  * The full site report shown on /site/[domain].
- * Layout (top to bottom): status header (with save star), overview (logo,
- * preview, key facts), load timing bar, four diagnostic cards, collapsible
- * detail tabs. The individual pieces live in components/report/.
+ * Layout (top to bottom): status header (with save star and share button),
+ * overview (logo, preview, key facts), load timing bar, four diagnostic
+ * cards, collapsible detail tabs. The individual pieces live in
+ * components/report/.
  *
  * Data comes from lib/server/siteReport.ts (first render) and
  * /api/check?diagnostics=1 ("Check again"). Checks are recorded for the
@@ -16,6 +17,7 @@ import StatusBadge from "./StatusBadge";
 import SiteOverview from "./report/SiteOverview";
 import SiteLogo from "./shared/SiteLogo";
 import SaveButton from "./shared/SaveButton";
+import ShareButton from "./shared/ShareButton";
 import TimingBar from "./report/TimingBar";
 import DiagnosticCards from "./report/DiagnosticCards";
 import DetailTabs from "./report/DetailTabs";
@@ -86,13 +88,23 @@ export default function SiteStatusPanel({
             </p>
           </div>
         </div>
-        <button
-          onClick={recheck}
-          disabled={loading}
-          className="rounded-lg bg-white border border-line px-4 py-2 text-sm font-semibold text-ink hover:border-signal/50 disabled:opacity-60 transition-colors shrink-0"
-        >
-          {loading ? "Checking\u2026" : "Check again"}
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <ShareButton
+            title={result.domain + " — " + SITE_NAME}
+            text={
+              result.status === "up"
+                ? result.domain + " is up right now."
+                : result.domain + " looks down right now."
+            }
+          />
+          <button
+            onClick={recheck}
+            disabled={loading}
+            className="rounded-lg bg-white border border-line px-4 py-2 text-sm font-semibold text-ink hover:border-signal/50 disabled:opacity-60 transition-colors"
+          >
+            {loading ? "Checking…" : "Check again"}
+          </button>
+        </div>
       </div>
 
       <SiteOverview result={result} page={page} finalUrl={d?.http.finalUrl ?? null} />
