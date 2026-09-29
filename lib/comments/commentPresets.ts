@@ -1,9 +1,9 @@
 /**
- * Preset "comments" for the per-domain live feed. Visitors never type free
- * text: they pick one of these, and only the id is sent to the server, which
- * looks the wording up here. Wording stays neutral and symptom-only (never
- * "scam", "hacked", etc.).
- * Shared by the client component and the server code, so it must not import
+ * Preset "comments" for the live feeds. Visitors never type free text: they
+ * pick one of these, and only the id is sent to the server, which looks the
+ * wording up here. Wording stays neutral and symptom-only (never "scam",
+ * "hacked", etc.).
+ * Shared by the client components and the server code, so it must not import
  * anything server-only. Contains no secrets.
  */
 
@@ -15,7 +15,7 @@ export interface CommentPreset {
   /** Short form used in the summary line ("9 login, 5 won't load"). */
   short: string;
   kind: CommentKind;
-  /** Only offered after an outage: needs recent problem reports. */
+  /** Only offered after an outage: needs recent problem comments. */
   recovery?: boolean;
 }
 
@@ -43,10 +43,12 @@ export interface CommentItem {
   kind: CommentKind;
   /** Epoch ms. */
   at: number;
+  /** Only set on the site-wide (home page) feed. */
+  domain?: string;
 }
 
 export interface CommentsSnapshot {
-  /** False when Redis isn't configured: the card hides itself. */
+  /** False when Redis isn't configured: the cards hide themselves. */
   enabled: boolean;
   /** Newest first, at most 100. */
   items: CommentItem[];
@@ -68,3 +70,11 @@ export const EMPTY_SNAPSHOT: CommentsSnapshot = {
   summary: { problems: 0, good: 0, top: [] },
   problemsLastHour: false,
 };
+
+/** Browser event the dropdown fires so a feed on the same page updates at once. */
+export const COMMENTS_UPDATED_EVENT = "pc:comments-updated";
+
+export interface CommentsUpdatedDetail {
+  domain: string;
+  snapshot: CommentsSnapshot;
+}

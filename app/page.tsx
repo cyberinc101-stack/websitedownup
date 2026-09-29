@@ -6,6 +6,7 @@ import AlertBar from "@/components/home/AlertBar";
 import LiveOutagesBoard from "@/components/home/LiveOutagesBoard";
 import ProblemsBox from "@/components/home/ProblemsBox";
 import LiveFeed from "@/components/home/LiveFeed";
+import CommentsFeed from "@/components/report/CommentsFeed";
 import PopularSitesExplorer from "@/components/home/PopularSitesExplorer";
 import { PopularStatusProvider } from "@/components/home/PopularStatusProvider";
 import FaqSection from "@/components/home/FaqSection";
@@ -72,6 +73,7 @@ export default async function HomePage() {
                 <ProblemsBox className="hidden lg:flex" />
                 <AdSlot className="min-h-[250px]" />
                 <LiveFeed initial={feed} limit={FEED_SIZE} />
+                <CommentsFeed />
                 <AdSlot className="min-h-[250px]" />
               </>
             }

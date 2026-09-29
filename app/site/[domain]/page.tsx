@@ -11,6 +11,7 @@ import { clientIpFrom, recordCheck, getRecentActivity, runMonitorTick } from "@/
 import SiteStatusPanel from "@/components/SiteStatusPanel";
 import EmbedBadge from "@/components/report/EmbedBadge";
 import ReportProblemButton from "@/components/report/ReportProblemButton";
+import CommentPicker from "@/components/report/CommentPicker";
 import CommentsFeed from "@/components/report/CommentsFeed";
 import AdSlot from "@/components/AdSlot";
 import AdRailLayout from "@/components/layout/AdRailLayout";
@@ -206,6 +207,8 @@ async function ReportSection({ rawDomain }: { rawDomain: string }) {
 
       <ReportProblemButton domain={report.domain} />
 
+      <CommentPicker domain={report.domain} status={report.status} />
+
       <p className="mt-3 text-xs text-muted">Own or run {report.domain}? <a href="#embed" className="text-signal hover:underline">Add a live status badge to your site</a>.</p>
 
       <AdSlot className="mt-8" />
@@ -325,20 +328,11 @@ async function ReportSection({ rawDomain }: { rawDomain: string }) {
 }
 
 /**
- * The live preset-comments card. Needs our latest check (to decide whether
- * "Back up now" style options make sense), so it awaits the same cached
- * report as ReportSection, inside its own Suspense boundary so it never
- * holds up the rest of the rail.
- */
-async function CommentsSection({ rawDomain }: { rawDomain: string }) {
-  const report = await getCachedSiteReport(rawDomain);
-  return <CommentsFeed domain={report.domain} status={report.status} />;
-}
-
-/**
  * Awaits the popular-sites snapshot and recent activity feed, and renders
- * the right rail's live boxes. Its own Suspense boundary so a slow
- * popular-sites cache miss (100 checks) never holds up the report either.
+ * the right rail's live boxes, with the "Live reports" card directly under
+ * "Recently checked". Its own Suspense boundary so a slow popular-sites
+ * cache miss (100 checks) never holds up the report either. The comments
+ * card only needs the domain, so it doesn't wait on the site check.
  */
 async function RailSection({ rawDomain }: { rawDomain: string }) {
   const [snapshot, feed] = await Promise.all([getPopularSnapshot(), getRecentActivity()]);
@@ -346,9 +340,7 @@ async function RailSection({ rawDomain }: { rawDomain: string }) {
     <PopularStatusProvider initial={snapshot}>
       <ProblemsBox />
       <LiveFeed initial={feed} limit={FEED_SIZE} />
-      <Suspense fallback={null}>
-        <CommentsSection rawDomain={rawDomain} />
-      </Suspense>
+      <CommentsFeed domain={normalizeDomain(rawDomain)} />
     </PopularStatusProvider>
   );
 }
