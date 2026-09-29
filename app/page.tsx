@@ -3,6 +3,7 @@ import HomeChecker from "@/components/HomeChecker";
 import AdSlot from "@/components/AdSlot";
 import RailRow from "@/components/layout/RailRow";
 import AlertBar from "@/components/home/AlertBar";
+import LiveOutagesBoard from "@/components/home/LiveOutagesBoard";
 import ProblemsBox from "@/components/home/ProblemsBox";
 import LiveFeed from "@/components/home/LiveFeed";
 import PopularSitesExplorer from "@/components/home/PopularSitesExplorer";
@@ -38,6 +39,7 @@ export default async function HomePage() {
     <PopularStatusProvider initial={snapshot}>
       <div className="mx-auto max-w-6xl px-5 sm:px-8 py-8 sm:py-12">
         <AlertBar />
+        <LiveOutagesBoard className="mb-6" />
 
         {/* Row 1: checker | top ad */}
         <RailRow
