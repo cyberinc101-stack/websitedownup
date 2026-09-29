@@ -1,19 +1,27 @@
 /**
  * Live preset-comment feeds made of preset comments only (see
  * lib/comments/commentPresets.ts). Two Redis lists, each holding the newest
- * 100 entries (LPUSH + LTRIM, so the oldest drops off by itself) with a
- * 3-hour expiry (comments also stop showing once they're 3 hours old):
+ * 100 entries (LPUSH + LTRIM, so the oldest drops off by itself):
  *  - one per domain (shown on that domain's report page)
  *  - one site-wide (shown on the home page, with the domain on each row)
+ * Comments live COMMENT_LIFETIME_MS (3 hours). They stop showing at that
+ * age AND are deleted from Redis (both lists) the next time a feed is read,
+ * together with their vote data. A list with no new comments also expires
+ * on its own 3 hours after its last comment.
  * Problem presets also add to the existing 15-minute problem count
  * (lib/server/problemReports.ts). "Working well" presets never do.
+ * Each item also carries a comment id (cid) and accurate / not accurate
+ * vote totals (lib/server/commentVotes.ts). Heavily downvoted comments are
+ * left out of the feed and of every count built from it.
  * SERVER-ONLY. Fails soft to an empty feed if Redis isn't configured or is
  * unreachable. Contains no secrets and stores no visitor identity.
  */
 
 import "server-only";
-import { redisPipeline, isRedisConfigured } from "@/lib/db/redis";
+import { redisPipeline, isRedisConfigured, type RedisCommand } from "@/lib/db/redis";
 import { addProblemReport } from "@/lib/server/problemReports";
+import { attachVotes, commentId, voteCleanupCommands, COMMENT_LIFETIME_MS } from "@/lib/server/commentVotes";
+import { isHidden, type VotableItem } from "@/lib/comments/votes";
 import {
   COMMENT_PRESETS,
   EMPTY_SNAPSHOT,
@@ -24,10 +32,8 @@ import {
 } from "@/lib/comments/commentPresets";
 
 const MAX_ITEMS = 100;
-/** Comments older than this stop showing, so a quiet site never displays stale reports. */
-const MAX_AGE_HOURS = 3;
-const LIST_TTL_SECONDS = MAX_AGE_HOURS * 3600;
-const MAX_AGE_MS = MAX_AGE_HOURS * 60 * 60 * 1000;
+const LIST_TTL_SECONDS = Math.floor(COMMENT_LIFETIME_MS / 1000);
+const MAX_AGE_MS = COMMENT_LIFETIME_MS;
 const SUMMARY_WINDOW_MS = 15 * 60 * 1000;
 const RECOVERY_WINDOW_MS = 60 * 60 * 1000;
 /** Comments (both types together) allowed per domain per day. */
@@ -69,16 +75,51 @@ function parseEntry(raw: unknown, now: number): CommentItem | null {
   }
 }
 
-function buildSnapshot(rows: unknown[], needDomain: boolean): CommentsSnapshot {
+/**
+ * Deletes every entry older than the lifetime from the list that was just
+ * read, from its domain's own list, and deletes their vote data. Uses LREM
+ * on the exact entry so a comment posted at the same moment is never lost.
+ */
+async function pruneExpired(key: string, rows: unknown[]): Promise<void> {
   const now = Date.now();
-  const items: CommentItem[] = [];
-  for (const row of rows) {
-    const item = parseEntry(row, now);
-    if (!item) continue;
-    if (needDomain && !item.domain) continue;
-    if (!needDomain) delete item.domain;
-    items.push(item);
+  const cmds: RedisCommand[] = [];
+  const staleIds: string[] = [];
+  for (const raw of rows) {
+    if (typeof raw !== "string") continue;
+    try {
+      const rec = JSON.parse(raw) as { p?: unknown; t?: unknown; d?: unknown };
+      const t = Number(rec.t);
+      if (!Number.isFinite(t) || now - t <= MAX_AGE_MS) continue;
+      cmds.push(["LREM", key, 0, raw]);
+      if (typeof rec.d === "string" && SAFE_DOMAIN.test(rec.d)) {
+        if (listKey(rec.d) !== key) cmds.push(["LREM", listKey(rec.d), 0, raw]);
+        if (typeof rec.p === "string") staleIds.push(commentId(rec.d, t, rec.p));
+      }
+    } catch {
+      // malformed entry: leave it, the list expiry will clear it
+    }
   }
+  if (cmds.length === 0) return;
+  await redisPipeline([...cmds, ...voteCleanupCommands(staleIds)]);
+}
+
+async function buildSnapshot(rows: unknown[], needDomain: boolean): Promise<CommentsSnapshot> {
+  const now = Date.now();
+  const all: VotableItem[] = [];
+  for (const row of rows) {
+    const parsed = parseEntry(row, now);
+    if (!parsed) continue;
+    if (needDomain && !parsed.domain) continue;
+    const item: VotableItem = parsed;
+    // The comment id needs the domain, so it is made before the domain is
+    // removed from per-domain feed items.
+    if (item.domain) item.cid = commentId(item.domain, item.at, item.id);
+    if (!needDomain) delete item.domain;
+    all.push(item);
+  }
+
+  await attachVotes(all);
+  const items = all.filter((i) => !isHidden(i.up ?? 0, i.down ?? 0));
 
   let problems = 0;
   let good = 0;
@@ -109,9 +150,11 @@ function buildSnapshot(rows: unknown[], needDomain: boolean): CommentsSnapshot {
 /** The current feed plus the summary numbers for one domain. */
 export async function getComments(domain: string): Promise<CommentsSnapshot> {
   if (!isRedisConfigured()) return { ...EMPTY_SNAPSHOT, enabled: false };
-  const result = await redisPipeline([["LRANGE", listKey(domain), 0, MAX_ITEMS - 1]]);
+  const key = listKey(domain);
+  const result = await redisPipeline([["LRANGE", key, 0, MAX_ITEMS - 1]]);
   const rows = result && Array.isArray(result[0]) ? (result[0] as unknown[]) : [];
-  return buildSnapshot(rows, false);
+  const [snapshot] = await Promise.all([buildSnapshot(rows, false), pruneExpired(key, rows)]);
+  return snapshot;
 }
 
 /** The site-wide feed (every domain), each item carrying its domain. */
@@ -119,7 +162,8 @@ export async function getGlobalComments(): Promise<CommentsSnapshot> {
   if (!isRedisConfigured()) return { ...EMPTY_SNAPSHOT, enabled: false };
   const result = await redisPipeline([["LRANGE", GLOBAL_KEY, 0, MAX_ITEMS - 1]]);
   const rows = result && Array.isArray(result[0]) ? (result[0] as unknown[]) : [];
-  return buildSnapshot(rows, true);
+  const [snapshot] = await Promise.all([buildSnapshot(rows, true), pruneExpired(GLOBAL_KEY, rows)]);
+  return snapshot;
 }
 
 /**
