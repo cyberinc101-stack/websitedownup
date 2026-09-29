@@ -2,7 +2,7 @@
  * Live preset-comment feeds made of preset comments only (see
  * lib/comments/commentPresets.ts). Two Redis lists, each holding the newest
  * 100 entries (LPUSH + LTRIM, so the oldest drops off by itself) with a
- * 24-hour expiry as a safety net:
+ * 3-hour expiry (comments also stop showing once they're 3 hours old):
  *  - one per domain (shown on that domain's report page)
  *  - one site-wide (shown on the home page, with the domain on each row)
  * Problem presets also add to the existing 15-minute problem count
@@ -24,8 +24,10 @@ import {
 } from "@/lib/comments/commentPresets";
 
 const MAX_ITEMS = 100;
-const LIST_TTL_SECONDS = 86400;
-const MAX_AGE_MS = 24 * 60 * 60 * 1000;
+/** Comments older than this stop showing, so a quiet site never displays stale reports. */
+const MAX_AGE_HOURS = 3;
+const LIST_TTL_SECONDS = MAX_AGE_HOURS * 3600;
+const MAX_AGE_MS = MAX_AGE_HOURS * 60 * 60 * 1000;
 const SUMMARY_WINDOW_MS = 15 * 60 * 1000;
 const RECOVERY_WINDOW_MS = 60 * 60 * 1000;
 /** Comments (both types together) allowed per domain per day. */
