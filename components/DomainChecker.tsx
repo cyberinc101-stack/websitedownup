@@ -5,7 +5,10 @@
  * diagnostics, so it's fast) and links to the full report page.
  * Takes a site name ("netflix") or an address, with suggestions
  * (components/shared/SiteSearchBox.tsx).
- * SECURITY: the API route applies the SSRF guard; nothing to do here.
+ * If the API refuses the request (for example the per-visitor rate limit),
+ * a neutral notice is shown instead of a false "down" result.
+ * SECURITY: the API route applies the SSRF guard and rate limits; nothing
+ * to do here.
  */
 
 import { useState, FormEvent } from "react";
@@ -33,17 +36,29 @@ export default function DomainChecker({
   const [result, setResult] = useState<Result | null>(null);
 
   const [inputError, setInputError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   async function runCheck(domain: string) {
     setValue(domain);
     setInputError(null);
+    setNotice(null);
     setLoading(true);
     setResult(null);
     try {
       const res = await fetch("/api/check?domain=" + encodeURIComponent(domain));
-      const data: Result = await res.json();
-      setResult(data);
-      onChecked?.(domain, data.status);
+      const data: unknown = await res.json();
+      if (!res.ok) {
+        // Refused (rate limit, bad input): say so, don't show it as "down".
+        const message =
+          data && typeof data === "object" && typeof (data as { error?: unknown }).error === "string"
+            ? (data as { error: string }).error
+            : "Something went wrong running the check.";
+        setNotice(message);
+        return;
+      }
+      const report = data as Result;
+      setResult(report);
+      onChecked?.(domain, report.status);
     } catch {
       setResult({
         domain,
@@ -108,6 +123,11 @@ export default function DomainChecker({
       {inputError && (
         <p id="domain-check-error" className="mt-2 text-sm text-ink" role="alert">
           {inputError}
+        </p>
+      )}
+      {notice && (
+        <p className="mt-2 text-sm text-ink" role="alert">
+          {notice}
         </p>
       )}
 
