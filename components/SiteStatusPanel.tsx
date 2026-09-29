@@ -18,6 +18,7 @@ import SiteOverview from "./report/SiteOverview";
 import SiteLogo from "./shared/SiteLogo";
 import SaveButton from "./shared/SaveButton";
 import ShareButton from "./shared/ShareButton";
+import SaveAlertPrompt from "./report/SaveAlertPrompt";
 import TimingBar from "./report/TimingBar";
 import DiagnosticCards from "./report/DiagnosticCards";
 import DetailTabs from "./report/DetailTabs";
@@ -106,6 +107,8 @@ export default function SiteStatusPanel({
           </button>
         </div>
       </div>
+
+      <SaveAlertPrompt domain={result.domain} status={result.status} />
 
       <SiteOverview result={result} page={page} finalUrl={d?.http.finalUrl ?? null} />
 
