@@ -10,6 +10,8 @@
  *  - Without a domain (home page): the newest comments across all sites,
  *    each row linking to that site's report.
  * The server keeps the newest 100 and the oldest drop off by themselves.
+ * Each comment shows in full: long ones wrap onto extra lines instead of
+ * being cut off with an ellipsis.
  *
  * Sized like the other rail boxes: fixed 300px height with its own scroll
  * (scrollbar hidden via .no-scrollbar, scrolling still works), so it never
@@ -126,22 +128,22 @@ export default function CommentsFeed({
       ) : (
         <ul className="no-scrollbar -mx-1.5 min-h-0 flex-1 space-y-1 overflow-y-auto px-1.5" aria-live="polite">
           {snap.items.map((item, i) => (
-            <li key={item.at + ":" + item.id + ":" + i} className="flex items-center gap-2 text-sm">
+            <li key={item.at + ":" + item.id + ":" + i} className="flex items-start gap-2 text-sm">
               <span
-                className={"h-2 w-2 rounded-full shrink-0 " + (item.kind === "good" ? "bg-up" : "bg-down")}
+                className={"mt-1.5 h-2 w-2 rounded-full shrink-0 " + (item.kind === "good" ? "bg-up" : "bg-down")}
                 aria-label={item.kind === "good" ? "Working well" : "Problem"}
               />
               {item.domain ? (
                 <Link
                   href={"/site/" + item.domain}
-                  className="flex-1 min-w-0 truncate text-ink hover:underline"
+                  className="flex-1 min-w-0 break-words text-ink hover:underline"
                 >
                   {item.domain}: {item.label}
                 </Link>
               ) : (
-                <span className="flex-1 min-w-0 truncate text-ink">Someone reported: {item.label}</span>
+                <span className="flex-1 min-w-0 break-words text-ink">Someone reported: {item.label}</span>
               )}
-              <span className="shrink-0 text-[11px] text-muted">
+              <span className="mt-0.5 shrink-0 text-[11px] text-muted">
                 <RelativeTime iso={new Date(item.at).toISOString()} />
               </span>
             </li>
