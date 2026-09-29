@@ -4,9 +4,13 @@
  * The App Worth tool (App Store apps only): two modes.
  *  - Look up an app: type its name (matches come from /api/app-search as
  *    you type) or paste an App Store link. The app lives in the URL
- *    (/app-worth?app=<id>), so every report is shareable and the back
- *    button works. Facts come from /api/app-worth; the report is built in
- *    the browser (lib/apps/engine). Google Play links get a clear message.
+ *    (/app-worth?app=<id>&name=<name>), so every report is shareable and
+ *    the back button works. `name` is carried along purely so the page's
+ *    share-card (app/app-worth/page.tsx's generateMetadata) can show the
+ *    app's real name without an extra lookup; the actual report data
+ *    still comes from /api/app-worth by id.
+ *    Facts come from /api/app-worth; the report is built in the browser
+ *    (lib/apps/engine). Google Play links get a clear message.
  *  - Use your own numbers: for owners who know their real revenue.
  * CLIENT-ONLY. Contains no secrets.
  */
@@ -38,9 +42,9 @@ function isSearchResponse(v: unknown): v is AppSearchResponse {
 function toSuggestion(a: AppSearchResult): Suggestion {
   const bits: string[] = [];
   if (a.developer) bits.push(a.developer);
-  if (a.rating !== null && a.ratingCount) bits.push(a.rating.toFixed(1) + " \u2605 (" + formatCount(a.ratingCount) + ")");
+  if (a.rating !== null && a.ratingCount) bits.push(a.rating.toFixed(1) + " ★ (" + formatCount(a.ratingCount) + ")");
   bits.push(a.price > 0 ? "$" + a.price.toFixed(2) : "Free");
-  return { key: a.id, title: a.name, subtitle: bits.join(" \u00b7 "), iconUrl: a.iconUrl };
+  return { key: a.id, title: a.name, subtitle: bits.join(" · "), iconUrl: a.iconUrl };
 }
 
 /** Text that should be searched by name (not a link, id or Android package). */
@@ -201,10 +205,17 @@ export default function AppWorthTool() {
   const report = useMemo(() => (signals ? estimateApp(signals) : null), [signals]);
   const suggestions = useMemo(() => (wantsSearch ? results.map(toSuggestion) : []), [results, wantsSearch]);
 
+  /**
+   * `name` is carried in the URL purely for the share card (see the file
+   * comment above) â€” the lookup itself only ever uses `id`.
+   */
   function openApp(id: string, name: string | null) {
     setInputError(null);
     if (name) setInput(name);
-    if (id !== queryApp) router.push("/app-worth?app=" + encodeURIComponent(id), { scroll: false });
+    if (id !== queryApp) {
+      const query = "/app-worth?app=" + encodeURIComponent(id) + (name ? "&name=" + encodeURIComponent(name) : "");
+      router.push(query, { scroll: false });
+    }
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -244,7 +255,7 @@ export default function AppWorthTool() {
       setSearching(false);
     }
     if (matches.length === 0) {
-      setInputError("No App Store apps match \u201c" + text + "\u201d. Check the spelling or paste the App Store link.");
+      setInputError("No App Store apps match “" + text + "”. Check the spelling or paste the App Store link.");
       return;
     }
     openApp(matches[0].id, matches[0].name);
@@ -301,9 +312,9 @@ export default function AppWorthTool() {
             <button
               type="submit"
               disabled={status === "loading"}
-              className="rounded-xl bg-signal px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="rounded-xl bg-signal px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90"
             >
-              {status === "loading" ? "Checking\u2026" : "Check worth"}
+              {status === "loading" ? "Checking…" : "Check worth"}
             </button>
           </form>
           <FindLinkTip />

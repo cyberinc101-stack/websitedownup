@@ -1,8 +1,8 @@
 /**
- * Default share-card image (Open Graph + Twitter) for the site: shown on
- * any page that doesn't set its own (the homepage, /about, /contact,
- * /privacy, and /worth or /app-worth with no domain/app selected yet).
- * Next.js picks this up automatically by file convention.
+ * Twitter/X card image for pages with no more specific one of their own.
+ * Reuses the same design as opengraph-image.tsx (Next.js requires each
+ * convention file to export its own Image function, so this just calls
+ * the shared renderer again rather than duplicating the design).
  * CLIENT-SAFE. Contains no secrets.
  */
 
