@@ -1,11 +1,18 @@
 /**
  * Monetag ads: paste your codes from the Monetag dashboard here.
  *
- * Only two formats are used, chosen to earn well without driving visitors
- * away (popunders and push notifications are deliberately left out):
+ * Three standalone formats are used (deliberately NOT the bundled
+ * "Multitag" — that groups Vignette/In-Page Push/OnClick/Push Notifications
+ * behind one script and one service worker, which would both duplicate the
+ * two formats below and collide with the site's own push-alert service
+ * worker in public/sw.js):
  *   - Vignette Banner: a full-screen card between page views, with a
  *     Close button.
  *   - In-Page Push: a small notification-style card in a corner.
+ *   - OnClick (Popunder): opens a new tab on click. The most aggressive of
+ *     the three, so it's throttled hard in MonetagAds.tsx (never on the
+ *     landing page, at most once per browser session) to avoid feeling
+ *     spammy.
  * How and when they load is decided in components/ads/MonetagAds.tsx.
  *
  * HOW TO FILL THIS IN: in Monetag, copy each code and paste it between
@@ -27,6 +34,9 @@ export const MONETAG_VIGNETTE_CODE = `<script>(function(s){s.dataset.zone='11910
 
 /** In-Page Push code. */
 export const MONETAG_IN_PAGE_PUSH_CODE = `<script>(function(s){s.dataset.zone='11910470',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>`;
+
+/** OnClick (Popunder) code. Standalone zone — NOT the bundled Multitag one. */
+export const MONETAG_ONCLICK_CODE = `<script>(function(s){s.dataset.zone='11917227',s.src='https://al5sm.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>`;
 
 // ---------------------------------------------------------------------------
 // Parsing (no need to edit below).
@@ -65,7 +75,5 @@ export function parseVerificationTag(tag: string): { name: string; content: stri
 
 export const MONETAG_VIGNETTE = parseMonetagCode(MONETAG_VIGNETTE_CODE);
 export const MONETAG_IN_PAGE_PUSH = parseMonetagCode(MONETAG_IN_PAGE_PUSH_CODE);
+export const MONETAG_ONCLICK = parseMonetagCode(MONETAG_ONCLICK_CODE);
 export const MONETAG_VERIFICATION = parseVerificationTag(MONETAG_VERIFICATION_TAG);
-
-/** Monetag SmartLink (https) for the leave-site gate. Empty = no ad step. */
-export const MONETAG_SMARTLINK = "https://omg10.com/4/11910746";
