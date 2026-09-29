@@ -158,6 +158,8 @@ async function ReportSection({ rawDomain }: { rawDomain: string }) {
         <SiteStatusPanel initial={report} uptimeStats={uptimeStats} />
       </div>
 
+      <ReportProblemButton domain={report.domain} />
+
       <AdSlot className="mt-8" />
 
       <section className="mt-8 text-sm text-muted leading-relaxed space-y-4">
