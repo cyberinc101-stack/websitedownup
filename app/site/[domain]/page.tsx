@@ -10,6 +10,7 @@ import { getPopularSnapshot } from "@/lib/server/popularStatus";
 import { clientIpFrom, recordCheck, getRecentActivity, runMonitorTick } from "@/lib/activity/checkActivity";
 import SiteStatusPanel from "@/components/SiteStatusPanel";
 import EmbedBadge from "@/components/report/EmbedBadge";
+import ReportProblemButton from "@/components/report/ReportProblemButton";
 import AdSlot from "@/components/AdSlot";
 import AdRailLayout from "@/components/layout/AdRailLayout";
 import { PopularStatusProvider } from "@/components/home/PopularStatusProvider";
