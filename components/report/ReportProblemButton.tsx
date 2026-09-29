@@ -5,7 +5,7 @@
  * confirm a live problem crowd-sourced style, separate from our own
  * automated up/down check above it. Shows a live count of reports in the
  * last 15 minutes for this domain, polled every 20s.
- * One report per visitor per domain every 5 minutes, enforced server-side
+ * One report per visitor per domain every 15 minutes, enforced server-side
  * by hashed IP; a local flag also disables the button right away so
  * someone can't spam-click it.
  */
@@ -73,7 +73,7 @@ export default function ReportProblemButton({ domain }: { domain: string }) {
     } finally {
       setReported(true);
       try {
-        window.localStorage.setItem(storageKey, String(Date.now() + 5 * 60 * 1000));
+        window.localStorage.setItem(storageKey, String(Date.now() + 15 * 60 * 1000));
       } catch {
         // localStorage unavailable
       }
