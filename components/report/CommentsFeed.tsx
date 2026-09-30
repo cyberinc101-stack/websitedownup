@@ -53,7 +53,15 @@ import {
   type CommentsUpdatedDetail,
 } from "@/lib/comments/commentPresets";
 import { isDisputed, type VotableItem } from "@/lib/comments/votes";
-import { getMyVotes, saveMyVote, voteAdDue, markVoteAdShown, type MyVote } from "@/lib/client/commentVotes";
+import {
+  getMyVotes,
+  saveMyVote,
+  voteAdDue,
+  markVoteAdShown,
+  MAX_VOTE_ACTIONS,
+  type MyVote,
+  type MyVoteState,
+} from "@/lib/client/commentVotes";
 
 const POLL_MS = 20000;
 /** Seconds before the Close button works, so the ad is actually seen. */
@@ -214,7 +222,7 @@ export default function CommentsFeed({
   const [snap, setSnap] = useState<CommentsSnapshot>(EMPTY_SNAPSHOT);
   const [loaded, setLoaded] = useState(false);
   const [gateDomain, setGateDomain] = useState<string | null>(null);
-  const [mine, setMine] = useState<Record<string, MyVote>>({});
+  const [mine, setMine] = useState<Record<string, MyVoteState>>({});
   const [busyCid, setBusyCid] = useState<string | null>(null);
   const [pending, setPending] = useState<{ item: VotableItem; vote: MyVote } | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -285,6 +293,22 @@ export default function CommentsFeed({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ domain: voteDomain, cid, vote }),
       });
+      if (res.status === 409) {
+        let info: { error?: string; mine?: MyVote | null; used?: number } = {};
+        try {
+          info = (await res.json()) as typeof info;
+        } catch {
+          // no JSON body
+        }
+        saveMyVote(
+          cid,
+          info.mine === "up" || info.mine === "down" ? info.mine : null,
+          typeof info.used === "number" ? info.used : MAX_VOTE_ACTIONS
+        );
+        setMine(getMyVotes());
+        flash(info.error || "You can't change this vote.");
+        return;
+      }
       if (!res.ok && res.status !== 429 && res.status !== 404) {
         let msg = "";
         try {
@@ -307,8 +331,8 @@ export default function CommentsFeed({
         flash("Couldn't save your vote.");
         return;
       }
-      const json = (await res.json()) as { up: number; down: number; mine: MyVote | null };
-      saveMyVote(cid, json.mine);
+      const json = (await res.json()) as { up: number; down: number; mine: MyVote | null; used: number };
+      saveMyVote(cid, json.mine, json.used);
       setMine(getMyVotes());
       setSnap((prev) => ({
         ...prev,
@@ -324,7 +348,16 @@ export default function CommentsFeed({
   function onVoteClick(item: VotableItem, choice: MyVote) {
     if (!item.cid) return;
     // Tapping the same button again undoes the vote (no ad for that).
-    if (mine[item.cid] === choice) {
+    const state = mine[item.cid];
+    if (state && state.used >= MAX_VOTE_ACTIONS) {
+      flash("You've used all your votes on this report.");
+      return;
+    }
+    if (state && state.vote && state.vote !== choice) {
+      flash("Tap your vote again to undo it first.");
+      return;
+    }
+    if (state && state.vote === choice) {
       void submitVote(item, "none");
       return;
     }
@@ -434,8 +467,8 @@ export default function CommentsFeed({
                   <VoteBar
                     up={up}
                     down={down}
-                    mine={mine[item.cid as string]}
-                    busy={busyCid === item.cid}
+                    mine={mine[item.cid as string]?.vote ?? undefined}
+                    busy={busyCid === item.cid || (mine[item.cid as string]?.used ?? 0) >= MAX_VOTE_ACTIONS}
                     onVote={(choice) => onVoteClick(item, choice)}
                     className={item.domain ? "pl-11" : "pl-5"}
                   />

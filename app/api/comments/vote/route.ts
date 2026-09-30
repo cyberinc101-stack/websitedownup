@@ -1,13 +1,15 @@
 /**
  * POST /api/comments/vote { domain, cid, vote: "up" | "down" | "none" }
  * Records this visitor's accurate / not accurate vote on a live comment and
- * returns { up, down, mine }.
+ * returns { up, down, mine, used }.
  * ABUSE GUARDS:
- *  - Same-origin only (Origin/Referer must be this site).
+ *  - Same-origin only (Origin/Referer must be this site or the host the
+ *    request came to, so local dev works).
  *  - Strict input checks: valid domain, 16-char hex comment id, fixed vote values.
  *  - The comment must still exist and be inside its 3-hour lifetime.
- *  - One vote per comment per hashed IP (changing or undoing replaces it),
- *    and at most 20 vote requests per minute per hashed IP.
+ *  - Each visitor (hashed IP) gets 3 vote actions per comment: vote, undo,
+ *    vote again. After that it is locked (409). Direct switching is refused (409).
+ *  - At most 20 vote requests per minute per hashed IP.
  * Stores only hashed, truncated IPs. Contains no secrets.
  */
 
@@ -69,5 +71,12 @@ export async function POST(req: Request) {
   if (!result) {
     return NextResponse.json({ error: "Voting is unavailable right now." }, { status: 503 });
   }
-  return NextResponse.json(result);
+  if (!result.ok) {
+    const error =
+      result.reason === "locked"
+        ? "You've used all your votes on this report."
+        : "Tap your vote again to undo it first.";
+    return NextResponse.json({ error, reason: result.reason, mine: result.mine, used: result.used }, { status: 409 });
+  }
+  return NextResponse.json({ up: result.up, down: result.down, mine: result.mine, used: result.used });
 }
