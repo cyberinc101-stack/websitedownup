@@ -98,7 +98,7 @@ async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promis
 
 async function checkWithRetry(domain: string): Promise<CheckResult> {
   const first = await checkDomain(domain);
-  if (first.status === "up") return first;
+  if (first.status === "up" || first.timedOut) return first;
   // One retry filters out brief network blips before we call a big site "down".
   return checkDomain(domain);
 }
@@ -154,7 +154,7 @@ async function buildProblemsSnapshot(): Promise<PopularSnapshot> {
   );
 
   // Re-check only the failures once, to filter out brief network blips.
-  const failedIndexes = results.map((r, i) => (r.status === "up" ? -1 : i)).filter((i) => i >= 0);
+  const failedIndexes = results.map((r, i) => (r.status === "up" || r.timedOut ? -1 : i)).filter((i) => i >= 0);
   const retried = await mapLimit(failedIndexes, CHECK_CONCURRENCY, (i) =>
     checkDomain(ALL_WATCH_SITES[i].domain, PROBLEMS_TIMEOUT_MS)
   );

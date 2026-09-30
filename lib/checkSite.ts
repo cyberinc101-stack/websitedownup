@@ -8,8 +8,6 @@
  * Contains no secrets.
  */
 
-import { BOT_USER_AGENT } from "@/lib/config/site";
-
 export type CheckStatus = "up" | "down";
 
 export interface CheckResult {
@@ -20,9 +18,25 @@ export interface CheckResult {
   responseTimeMs: number | null;
   checkedAt: string;
   error?: string;
+  /** True when the request was aborted for taking too long (as opposed to a refused/reset connection). */
+  timedOut?: boolean;
 }
 
 const TIMEOUT_MS = 9000;
+/** Don't start a second attempt with less than this left. */
+const MIN_ATTEMPT_MS = 400;
+
+/**
+ * Many big sites stall or drop requests that don't look like a browser.
+ * Any HTTP response (even 403/429) proves the server is up, so we only need
+ * the request to look ordinary enough to get *an* answer.
+ */
+const BROWSER_HEADERS: Record<string, string> = {
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "Accept-Language": "en-US,en;q=0.9",
+};
 
 /**
  * Normalizes whatever the person typed ("facebook.com", "www.facebook.com",
@@ -43,33 +57,58 @@ export function isLikelyValidDomain(domain: string): boolean {
   return /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i.test(domain);
 }
 
+function isAbortError(err: unknown): boolean {
+  return (
+    !!err &&
+    typeof err === "object" &&
+    "name" in err &&
+    ((err as { name: unknown }).name === "AbortError" ||
+      (err as { name: unknown }).name === "TimeoutError")
+  );
+}
+
+/**
+ * One GET with its OWN timeout (so a stalled attempt can't starve the next
+ * one). GET rather than HEAD, because many servers hang or reject HEAD.
+ * The body is cancelled as soon as headers arrive; we only need the status.
+ */
 async function attempt(
   url: string,
-  method: "HEAD" | "GET",
-  signal: AbortSignal
-): Promise<{ statusCode: number }> {
-  const res = await fetch(url, {
-    method,
-    redirect: "follow",
-    signal,
-    headers: {
-      "User-Agent": BOT_USER_AGENT,
-    },
-    cache: "no-store",
-  });
-  return { statusCode: res.status };
+  timeoutMs: number
+): Promise<{ statusCode: number; responseTimeMs: number }> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const started = Date.now();
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      redirect: "follow",
+      signal: controller.signal,
+      headers: BROWSER_HEADERS,
+      cache: "no-store",
+    });
+    const responseTimeMs = Date.now() - started;
+    try {
+      await res.body?.cancel();
+    } catch {
+      // ignore: we already have the status
+    }
+    return { statusCode: res.status, responseTimeMs };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /**
  * Performs a real, live reachability check against the given domain.
- * Tries HEAD first (cheap), falls back to GET since some servers
- * reject HEAD requests outright.
  *
- * timeoutMs lets callers that check a large batch of sites (the wider
- * "Having problems" watch list) use a shorter timeout than the default,
- * so a handful of slow/unreachable sites can't make the whole batch take
- * far longer than the majority. The single-site checker and the ranked
- * Top 100 snapshot keep the default, unshortened timeout.
+ * Tries https://domain first. If that fails quickly for a reason other
+ * than a timeout (DNS, reset, TLS), it tries https://www.domain with
+ * whatever time is left, because some sites only answer on www.
+ *
+ * timeoutMs is the total budget. Callers that check a large batch of
+ * sites (the wider "Having problems" watch list) pass a shorter one so a
+ * handful of slow sites can't make the whole batch take far longer.
  */
 export async function checkDomain(rawInput: string, timeoutMs: number = TIMEOUT_MS): Promise<CheckResult> {
   const domain = normalizeDomain(rawInput);
@@ -87,45 +126,52 @@ export async function checkDomain(rawInput: string, timeoutMs: number = TIMEOUT_
     };
   }
 
-  const url = "https://" + domain;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  const started = Date.now();
+  const deadline = Date.now() + timeoutMs;
+  const hosts = [domain, "www." + domain];
 
-  try {
-    let result;
+  for (let i = 0; i < hosts.length; i++) {
+    const remaining = deadline - Date.now();
+    if (i > 0 && remaining < MIN_ATTEMPT_MS) break;
+
     try {
-      result = await attempt(url, "HEAD", controller.signal);
-    } catch {
-      result = await attempt(url, "GET", controller.signal);
+      const result = await attempt("https://" + hosts[i], Math.max(remaining, MIN_ATTEMPT_MS));
+      const isServerError = result.statusCode >= 500;
+      return {
+        input: rawInput,
+        domain,
+        status: isServerError ? "down" : "up",
+        statusCode: result.statusCode,
+        responseTimeMs: result.responseTimeMs,
+        checkedAt,
+        error: isServerError
+          ? "The server responded with an error (HTTP " + result.statusCode + ")."
+          : undefined,
+      };
+    } catch (err) {
+      if (isAbortError(err)) {
+        // A stall on the apex means the budget is spent; don't try www.
+        return {
+          input: rawInput,
+          domain,
+          status: "down",
+          statusCode: null,
+          responseTimeMs: null,
+          checkedAt,
+          error: "The site took too long to respond.",
+          timedOut: true,
+        };
+      }
+      // Fast, non-timeout failure: fall through and try the next host.
     }
-    const responseTimeMs = Date.now() - started;
-    const isServerError = result.statusCode >= 500;
-    return {
-      input: rawInput,
-      domain,
-      status: isServerError ? "down" : "up",
-      statusCode: result.statusCode,
-      responseTimeMs,
-      checkedAt,
-      error: isServerError
-        ? "The server responded with an error (HTTP " + result.statusCode + ")."
-        : undefined,
-    };
-  } catch (err) {
-    const aborted = controller.signal.aborted;
-    return {
-      input: rawInput,
-      domain,
-      status: "down",
-      statusCode: null,
-      responseTimeMs: null,
-      checkedAt,
-      error: aborted
-        ? "The site took too long to respond."
-        : "The site could not be reached.",
-    };
-  } finally {
-    clearTimeout(timer);
   }
+
+  return {
+    input: rawInput,
+    domain,
+    status: "down",
+    statusCode: null,
+    responseTimeMs: null,
+    checkedAt,
+    error: "The site could not be reached.",
+  };
 }
