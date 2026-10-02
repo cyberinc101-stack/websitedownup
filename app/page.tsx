@@ -2,7 +2,6 @@ import { after } from "next/server";
 import HomeChecker from "@/components/HomeChecker";
 import AdSlot from "@/components/AdSlot";
 import RailRow from "@/components/layout/RailRow";
-import AlertBar from "@/components/home/AlertBar";
 import LiveOutagesBoard from "@/components/home/LiveOutagesBoard";
 import ProblemsBox from "@/components/home/ProblemsBox";
 import LiveFeed from "@/components/home/LiveFeed";
@@ -40,7 +39,6 @@ export default async function HomePage() {
   return (
     <PopularStatusProvider initial={snapshot}>
       <div className="mx-auto max-w-6xl px-5 sm:px-8 py-8 sm:py-12">
-        <AlertBar />
         <LiveOutagesBoard className="mb-6" />
 
         {/* Row 1: checker | top ad */}
@@ -90,8 +88,7 @@ export default async function HomePage() {
             that website at that exact moment and measures how it responds.
             We don&apos;t rely on crowdsourced reports, so what you see reflects
             the site&apos;s status from our end. The top {snapshot.sites.length} sites
-            are re-checked every couple of minutes, and we raise an outage
-            alert when one of the top 50 stops responding.
+            are re-checked every couple of minutes.
           </p>
           <p>
             A result of &ldquo;down&rdquo; means our server couldn&apos;t
